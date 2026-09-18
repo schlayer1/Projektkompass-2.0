@@ -110,9 +110,18 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   const doneChecks = task.checklist.filter((c) => c.done).length;
   const progressPercent = totalChecks > 0 ? (doneChecks / totalChecks) * 100 : 0;
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('input') || target.closest('label')) {
+      return;
+    }
+    onEdit(task);
+  };
+
   return (
     <div
       draggable
+      onClick={handleCardClick}
       onDragStart={(e) => onDragStart(e, task.id)}
       onDragEnd={onDragEnd}
       className={`p-3.5 rounded-xl shadow-sm border transition-all cursor-grab active:cursor-grabbing relative group ${

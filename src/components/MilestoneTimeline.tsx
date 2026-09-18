@@ -35,15 +35,15 @@ export const MilestoneTimeline: React.FC<MilestoneTimelineProps> = ({
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 mb-5">
       {/* Header */}
-      <div className="flex justify-between items-center mb-3">
-        <div className="flex items-center gap-2">
-          <div className="bg-[#0B7BA7] text-white p-1.5 rounded-lg shadow-sm">
+      <div className="flex flex-wrap sm:flex-nowrap justify-between items-center gap-2 mb-3">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="bg-[#0B7BA7] text-white p-1.5 rounded-lg shadow-sm shrink-0">
             <MilestoneIcon className="w-4 h-4" />
           </div>
-          <div>
-            <h3 className="font-extrabold text-sm sm:text-base text-gray-900 leading-tight flex items-center gap-2">
-              <span>{projectType === 'grad10' ? 'Prüfungs-Timeline: Klasse 10 Abschlussarbeit' : 'Projekt-Meilensteine'}</span>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-50 text-[#0B7BA7] border border-sky-200">
+          <div className="min-w-0">
+            <h3 className="font-extrabold text-xs sm:text-base text-gray-900 leading-tight flex items-center gap-1.5 sm:gap-2 flex-wrap">
+              <span className="truncate">{projectType === 'grad10' ? 'Prüfungs-Timeline: Jg. 10 Abschlussarbeit' : 'Projekt-Meilensteine'}</span>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-50 text-[#0B7BA7] border border-sky-200 shrink-0">
                 {completedCount}/{total} Etappen ({percent}%)
               </span>
             </h3>
@@ -53,11 +53,11 @@ export const MilestoneTimeline: React.FC<MilestoneTimelineProps> = ({
         {/* Teacher Edit Button */}
         <button
           onClick={onOpenEditor}
-          className="flex items-center gap-1.5 text-xs font-bold text-gray-600 hover:text-[#0B7BA7] bg-slate-50 hover:bg-sky-50 px-2.5 py-1.5 rounded-xl border border-slate-200 transition-colors"
+          className="flex items-center gap-1.5 text-xs font-bold text-gray-600 hover:text-[#0B7BA7] bg-slate-50 hover:bg-sky-50 px-2.5 py-1.5 rounded-xl border border-slate-200 transition-colors shrink-0 ml-auto"
           title="Timeline & Termine anpassen"
         >
           <Settings2 className="w-3.5 h-3.5" />
-          <span>Timeline anpassen</span>
+          <span><span className="hidden sm:inline">Timeline </span>anpassen</span>
         </button>
       </div>
 
