@@ -112,12 +112,12 @@ export const Header: React.FC<HeaderProps> = ({
             </p>
           </div>
 
-          {/* Board Code Badge (Desktop) */}
+          {/* Board Code Badge (Desktop/Tablet) */}
           {board.boardCode && (
             <button
               onClick={handleCopyCode}
               title="Projekt-Code kopieren"
-              className="hidden md:flex items-center gap-1.5 bg-sky-50 hover:bg-sky-100 text-[#0B7BA7] border border-sky-200 text-xs font-bold px-2.5 py-1 rounded-lg transition-colors shrink-0"
+              className="hidden sm:flex items-center gap-1.5 bg-sky-50 hover:bg-sky-100 text-[#0B7BA7] border border-sky-200 text-xs font-bold px-2.5 py-1 rounded-lg transition-colors shrink-0"
             >
               <span>Code: {board.boardCode}</span>
               {copiedCode ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5 opacity-60" />}
@@ -126,26 +126,14 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Global Tools & Actions */}
-        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-          {/* Mobile Code badge */}
-          {board.boardCode && (
-            <button
-              onClick={handleCopyCode}
-              title="Code kopieren"
-              className="flex md:hidden items-center gap-0.5 bg-sky-50 text-[#0B7BA7] border border-sky-200 text-[10px] font-bold px-1.5 py-1 rounded-md shrink-0"
-            >
-              <span>{board.boardCode}</span>
-              {copiedCode ? <Check className="w-2.5 h-2.5 text-green-600" /> : <Copy className="w-2.5 h-2.5 opacity-60" />}
-            </button>
-          )}
-
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {/* Classroom Timer */}
           <ClassroomTimer />
 
-          {/* Online / Offline Sync Indicator */}
+          {/* Online / Offline Sync Indicator (Tablet/Desktop) */}
           <div
             title={isOnline ? (offlineQueueCount > 0 ? `${offlineQueueCount} Änderungen in Warteschlange` : 'Online & synchronisiert') : 'Offline'}
-            className={`flex items-center gap-1 text-[11px] font-bold p-1 sm:px-2 sm:py-1 rounded-md border ${
+            className={`hidden sm:flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-md border ${
               isOnline
                 ? offlineQueueCount > 0
                   ? 'bg-amber-50 text-amber-700 border-amber-200'
@@ -240,17 +228,31 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Row 2: Project Metadata Bar */}
       <div className="bg-slate-50/80 px-3 sm:px-6 py-1.5 flex flex-wrap md:flex-nowrap items-center gap-2 border-t border-slate-100">
-        {/* Mobile-only Project Type Switcher */}
+        {/* Mobile-only Project Type & Code Switcher Strip */}
         <div className="w-full sm:hidden flex items-center justify-between gap-2 pb-1 border-b border-slate-200/60">
-          <span className="text-[11px] font-bold text-slate-500 shrink-0">Projektart:</span>
-          <select
-            value={board.projectType || 'regular'}
-            onChange={(e) => onUpdateMeta('projectType', e.target.value as ProjectType)}
-            className="text-[11px] font-extrabold uppercase tracking-wide px-2 py-1 bg-white text-[#0B7BA7] rounded-lg border border-sky-300 focus:outline-none cursor-pointer flex-1"
-          >
-            <option value="grad10">🎓 Jg. 10 Abschlussarbeit</option>
-            <option value="regular">📚 Fachunterricht</option>
-          </select>
+          <div className="flex items-center gap-1.5 flex-1 min-w-0">
+            <span className="text-[11px] font-bold text-slate-500 shrink-0">Modus:</span>
+            <select
+              value={board.projectType || 'regular'}
+              onChange={(e) => onUpdateMeta('projectType', e.target.value as ProjectType)}
+              className="text-[11px] font-extrabold uppercase tracking-wide px-2 py-1 bg-white text-[#0B7BA7] rounded-lg border border-sky-300 focus:outline-none cursor-pointer flex-1 truncate"
+            >
+              <option value="grad10">🎓 Jg. 10 Abschluss</option>
+              <option value="regular">📚 Fachunterricht</option>
+            </select>
+          </div>
+
+          {/* Mobile Code Badge */}
+          {board.boardCode && (
+            <button
+              onClick={handleCopyCode}
+              title="Projekt-Code kopieren"
+              className="flex items-center gap-1 bg-sky-50 text-[#0B7BA7] border border-sky-200 text-[10px] font-bold px-2 py-1 rounded-md shrink-0 shadow-2xs"
+            >
+              <span>{board.boardCode}</span>
+              {copiedCode ? <Check className="w-3 h-3 text-green-600" /> : <Copy className="w-3 h-3 opacity-60" />}
+            </button>
+          )}
         </div>
 
         {/* Project Title */}
@@ -259,7 +261,7 @@ export const Header: React.FC<HeaderProps> = ({
           value={board.projectName}
           onChange={(e) => onUpdateMeta('projectName', e.target.value)}
           placeholder="Projekttitel..."
-          className="border border-gray-300 rounded-lg px-2.5 py-1 text-xs sm:text-sm font-bold text-gray-800 focus:outline-none focus:border-[#0B7BA7] flex-1 min-w-[140px] sm:min-w-[180px] bg-white shadow-2xs"
+          className="border border-gray-300 rounded-lg px-2.5 py-1 text-xs sm:text-sm font-bold text-gray-800 focus:outline-none focus:border-[#0B7BA7] w-full md:w-auto md:flex-1 md:min-w-[180px] bg-white shadow-2xs"
         />
 
         {/* Group Name & Members Button */}

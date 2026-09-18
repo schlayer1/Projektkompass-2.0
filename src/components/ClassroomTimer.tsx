@@ -73,7 +73,7 @@ export const ClassroomTimer: React.FC = () => {
       {/* Mini Toggle Button in Header */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border transition-colors ${
+        className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-bold border transition-colors ${
           isRunning
             ? 'bg-amber-50 text-amber-800 border-amber-300'
             : isFinished
