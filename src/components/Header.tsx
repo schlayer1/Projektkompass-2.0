@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { ProjectBoard, ProjectType } from '../types/project';
 import { useAuth } from '../context/AuthContext';
 import { getAllTeachers } from '../data/teachers';
+import { SCHOOL_CLASSES } from '../data/schoolClasses';
 import { ClassroomTimer } from './ClassroomTimer';
 import {
   Upload,
@@ -317,11 +318,17 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Class */}
           <input
             type="text"
+            list="hbs-classes-list"
             value={board.studentClass}
             onChange={(e) => onUpdateMeta('studentClass', e.target.value)}
             placeholder="Klasse"
             className="border border-gray-300 rounded-lg px-2 py-1 text-xs sm:text-sm font-medium focus:outline-none focus:border-[#0B7BA7] w-14 sm:w-16 bg-white text-center shrink-0 shadow-2xs"
           />
+          <datalist id="hbs-classes-list">
+            {SCHOOL_CLASSES.map((cls) => (
+              <option key={cls} value={cls} />
+            ))}
+          </datalist>
         </div>
 
         {/* Teacher Selection Dropdown (HBS Teacher List!) */}

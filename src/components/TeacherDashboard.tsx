@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ProjectBoard, Milestone, ConsultationRecord } from '../types/project';
+import { SCHOOL_CLASSES } from '../data/schoolClasses';
 import { useAuth } from '../context/AuthContext';
 import {
   fetchBoardsForTeacher,
@@ -274,14 +275,11 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                 className="text-xs bg-slate-50 border border-gray-300 rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-[#0B7BA7] font-semibold text-gray-700"
               >
                 <option value="Alle">Alle Klassen</option>
-                <option value="8a">Klasse 8a</option>
-                <option value="8b">Klasse 8b</option>
-                <option value="8c">Klasse 8c</option>
-                <option value="9a">Klasse 9a</option>
-                <option value="9b">Klasse 9b</option>
-                <option value="9c">Klasse 9c</option>
-                <option value="10a">Klasse 10a</option>
-                <option value="10b">Klasse 10b</option>
+                {SCHOOL_CLASSES.map((cls) => (
+                  <option key={cls} value={cls}>
+                    Klasse {cls}
+                  </option>
+                ))}
               </select>
             )}
           </div>

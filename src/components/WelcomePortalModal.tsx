@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getAllTeachers, getTeacherByPin } from '../data/teachers';
+import { SCHOOL_CLASSES } from '../data/schoolClasses';
 import {
   Compass,
   Users,
@@ -455,12 +456,11 @@ export const WelcomePortalModal: React.FC<WelcomePortalModalProps> = ({
                         onChange={(e) => setNewClass(e.target.value)}
                         className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-bold text-slate-800 focus:outline-none focus:border-[#0B7BA7]"
                       >
-                        <option value="10a">Klasse 10a</option>
-                        <option value="10b">Klasse 10b</option>
-                        <option value="9a">Klasse 9a</option>
-                        <option value="9b">Klasse 9b</option>
-                        <option value="8a">Klasse 8a</option>
-                        <option value="8b">Klasse 8b</option>
+                        {SCHOOL_CLASSES.map((cls) => (
+                          <option key={cls} value={cls}>
+                            Klasse {cls}
+                          </option>
+                        ))}
                         <option value="custom">Andere Klasse...</option>
                       </select>
                       {newClass === 'custom' && (
