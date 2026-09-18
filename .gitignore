@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Production output
+dist/
+dist-ssr/
+
+# Local Environment & Secrets
+.env
+.env.local
+.env.*.local
+
+# OS & Editor files
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
