@@ -10,7 +10,7 @@ const firebaseConfig = {
   projectId: env.VITE_FIREBASE_PROJECT_ID || "tag-in-der-praxis-kahla",
   storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET || "tag-in-der-praxis-kahla.firebasestorage.app",
   messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID || "77639235687",
-  appId: env.VITE_FIREBASE_APP_ID || "1:77639235687:web:83695a871c6ccb0b3dfcc2"
+  appId: env.VITE_FIREBASE_APP_ID || "1:77639235687:web:1bac4df8ec78b2073dfcc2"
 };
 
 export const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
