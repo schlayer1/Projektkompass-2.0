@@ -107,7 +107,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
       {/* Board Controls (Search, Filter, Add) */}
       <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-2.5 mb-4 shrink-0">
-        <div className="flex flex-wrap items-center gap-2 flex-1">
+        <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 flex-1">
           {/* Search */}
           <div className="relative flex-1 min-w-[140px]">
             <Search className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
@@ -120,33 +120,36 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             />
           </div>
 
-          {/* Category Filter */}
-          <select
-            value={tagFilter}
-            onChange={(e) => setTagFilter(e.target.value)}
-            className="text-xs bg-white border border-gray-300 rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-[#0B7BA7] text-gray-700"
-          >
-            <option value="all">Alle Kategorien</option>
-            <option value="recherche">🔍 Recherche</option>
-            <option value="material">✂️ Material</option>
-            <option value="text">✍️ Text</option>
-            <option value="layout">🎨 Layout</option>
-            <option value="praesentation">🗣️ Präsentation</option>
-            <option value="medien">💻 Technik</option>
-            <option value="kontrolle">🔄 Kontrolle</option>
-          </select>
+          {/* Filters on mobile in 1 line */}
+          <div className="flex items-center gap-2">
+            {/* Category Filter */}
+            <select
+              value={tagFilter}
+              onChange={(e) => setTagFilter(e.target.value)}
+              className="flex-1 sm:flex-initial text-xs bg-white border border-gray-300 rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-[#0B7BA7] text-gray-700 min-w-0"
+            >
+              <option value="all">Alle Kategorien</option>
+              <option value="recherche">🔍 Recherche</option>
+              <option value="material">✂️ Material</option>
+              <option value="text">✍️ Text</option>
+              <option value="layout">🎨 Layout</option>
+              <option value="praesentation">🗣️ Präsentation</option>
+              <option value="medien">💻 Technik</option>
+              <option value="kontrolle">🔄 Kontrolle</option>
+            </select>
 
-          {/* Priority Filter */}
-          <select
-            value={priorityFilter}
-            onChange={(e) => setPriorityFilter(e.target.value)}
-            className="text-xs bg-white border border-gray-300 rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-[#0B7BA7] text-gray-700"
-          >
-            <option value="all">Alle Prioritäten</option>
-            <option value="urgent">🔴 Dringend</option>
-            <option value="important">🟡 Wichtig</option>
-            <option value="normal">🟢 Normal</option>
-          </select>
+            {/* Priority Filter */}
+            <select
+              value={priorityFilter}
+              onChange={(e) => setPriorityFilter(e.target.value)}
+              className="flex-1 sm:flex-initial text-xs bg-white border border-gray-300 rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-[#0B7BA7] text-gray-700 min-w-0"
+            >
+              <option value="all">Alle Prioritäten</option>
+              <option value="urgent">🔴 Dringend</option>
+              <option value="important">🟡 Wichtig</option>
+              <option value="normal">🟢 Normal</option>
+            </select>
+          </div>
         </div>
 
         <button

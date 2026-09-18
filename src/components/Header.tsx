@@ -264,44 +264,46 @@ export const Header: React.FC<HeaderProps> = ({
           className="border border-gray-300 rounded-lg px-2.5 py-1 text-xs sm:text-sm font-bold text-gray-800 focus:outline-none focus:border-[#0B7BA7] w-full md:w-auto md:flex-1 md:min-w-[180px] bg-white shadow-2xs"
         />
 
-        {/* Group Name & Members Button */}
-        <div className="flex gap-1 items-center shrink-0">
+        {/* Group Name & Members Button & Class */}
+        <div className="flex items-center justify-between w-full sm:w-auto gap-2">
+          <div className="flex gap-1 items-center flex-1 sm:flex-initial">
+            <input
+              type="text"
+              value={board.studentName}
+              onChange={(e) => onUpdateMeta('studentName', e.target.value)}
+              placeholder="Gruppe"
+              className="border border-gray-300 rounded-lg px-2.5 py-1 text-xs sm:text-sm focus:outline-none focus:border-[#0B7BA7] w-full sm:w-32 bg-white shadow-2xs font-medium"
+            />
+            <button
+              type="button"
+              onClick={onOpenMembersModal}
+              className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-lg border transition-colors shadow-2xs shrink-0 ${
+                board.groupMembers && board.groupMembers.length > 0
+                  ? 'bg-sky-50 text-[#0B7BA7] border-sky-300 hover:bg-sky-100'
+                  : 'bg-white text-gray-500 border-gray-300 hover:bg-gray-50'
+              }`}
+              title="Gruppenmitglieder verwalten"
+            >
+              <Users className="w-3.5 h-3.5" />
+              <span>{board.groupMembers?.length || 0}</span>
+            </button>
+          </div>
+
+          {/* Class */}
           <input
             type="text"
-            value={board.studentName}
-            onChange={(e) => onUpdateMeta('studentName', e.target.value)}
-            placeholder="Gruppe"
-            className="border border-gray-300 rounded-lg px-2.5 py-1 text-xs sm:text-sm focus:outline-none focus:border-[#0B7BA7] w-24 sm:w-36 bg-white shadow-2xs font-medium"
+            value={board.studentClass}
+            onChange={(e) => onUpdateMeta('studentClass', e.target.value)}
+            placeholder="Klasse"
+            className="border border-gray-300 rounded-lg px-2 py-1 text-xs sm:text-sm font-medium focus:outline-none focus:border-[#0B7BA7] w-14 sm:w-16 bg-white text-center shrink-0 shadow-2xs"
           />
-          <button
-            type="button"
-            onClick={onOpenMembersModal}
-            className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-lg border transition-colors shadow-2xs ${
-              board.groupMembers && board.groupMembers.length > 0
-                ? 'bg-sky-50 text-[#0B7BA7] border-sky-300 hover:bg-sky-100'
-                : 'bg-white text-gray-500 border-gray-300 hover:bg-gray-50'
-            }`}
-            title="Gruppenmitglieder verwalten"
-          >
-            <Users className="w-3.5 h-3.5" />
-            <span>{board.groupMembers?.length || 0}</span>
-          </button>
         </div>
-
-        {/* Class */}
-        <input
-          type="text"
-          value={board.studentClass}
-          onChange={(e) => onUpdateMeta('studentClass', e.target.value)}
-          placeholder="Klasse"
-          className="border border-gray-300 rounded-lg px-2 py-1 text-xs sm:text-sm font-medium focus:outline-none focus:border-[#0B7BA7] w-14 sm:w-16 bg-white text-center shrink-0 shadow-2xs"
-        />
 
         {/* Teacher Selection Dropdown (HBS Teacher List!) */}
         <select
           value={board.teacherId || ''}
           onChange={(e) => handleTeacherSelect(e.target.value)}
-          className="border border-gray-300 rounded-lg px-2 py-1 text-xs sm:text-sm font-medium focus:outline-none focus:border-[#0B7BA7] bg-white flex-1 sm:flex-initial sm:max-w-[160px] shrink-0 shadow-2xs"
+          className="border border-gray-300 rounded-lg px-2 py-1 text-xs sm:text-sm font-medium focus:outline-none focus:border-[#0B7BA7] bg-white w-full sm:w-auto sm:max-w-[160px] shadow-2xs"
         >
           <option value="">Lehrkraft wählen...</option>
           {teachers.map((tch) => (
