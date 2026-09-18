@@ -81,20 +81,20 @@ export const Header: React.FC<HeaderProps> = ({
       />
 
       {/* Row 1: Brand, Mode, Timer & Global Actions */}
-      <div className="px-3 sm:px-6 py-2 flex items-center justify-between gap-1.5 sm:gap-4 border-b border-slate-100">
+      <div className="px-2.5 sm:px-6 py-1.5 sm:py-2 flex items-center justify-between gap-1 sm:gap-4 border-b border-slate-100">
         {/* Brand */}
         <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
           <img
             src="/Siegel_bunt.png"
             alt="Heimbürgeschule Kahla"
-            className="w-8 h-8 sm:w-11 sm:h-11 object-contain rounded-full border-2 border-[#0B7BA7] p-0.5 bg-white shadow-sm shrink-0"
+            className="w-7 h-7 sm:w-10 sm:h-10 object-contain rounded-full border-2 border-[#0B7BA7] p-0.5 bg-white shadow-sm shrink-0"
             onError={(e) => {
               (e.target as HTMLElement).style.display = 'none';
             }}
           />
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h1 className="text-sm sm:text-xl font-black text-[#0B7BA7] tracking-tight m-0 leading-tight">
+              <h1 className="text-xs sm:text-lg md:text-xl font-black text-[#0B7BA7] tracking-tight m-0 leading-tight">
                 Projektkompass
               </h1>
               {/* Project Type Selector (Desktop/Tablet) */}
@@ -227,7 +227,7 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Row 2: Project Metadata Bar */}
-      <div className="bg-slate-50/80 px-3 sm:px-6 py-1.5 flex flex-wrap md:flex-nowrap items-center gap-2 border-t border-slate-100">
+      <div className="bg-slate-50/80 px-2.5 sm:px-6 py-1.5 flex flex-wrap md:flex-nowrap items-center gap-2 border-t border-slate-100">
         {/* Mobile-only Project Type & Code Switcher Strip */}
         <div className="w-full sm:hidden flex items-center justify-between gap-2 pb-1 border-b border-slate-200/60">
           <div className="flex items-center gap-1.5 flex-1 min-w-0">

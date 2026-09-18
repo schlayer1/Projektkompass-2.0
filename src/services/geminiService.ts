@@ -20,10 +20,9 @@ let cachedWorkingModel: string | null = null;
 let cachedApiVersion: string = 'v1beta';
 
 const FALLBACK_FLASH_MODELS = [
-  'gemini-3.8-flash',
-  'gemini-3.7-flash',
-  'gemini-3.6-flash',
-  'gemini-3.5-flash',
+  'gemini-2.5-flash',
+  'gemini-2.0-flash',
+  'gemini-1.5-flash',
   'gemini-flash-latest',
 ];
 
@@ -56,10 +55,7 @@ export async function discoverBestModel(key: string): Promise<{ model: string; v
             !name.includes('image') &&
             !name.includes('native-audio') &&
             !name.includes('transcribe') &&
-            !name.includes('computer-use') &&
-            !name.includes('2.0') &&
-            !name.includes('2.5') &&
-            !name.includes('1.5')
+            !name.includes('computer-use')
           );
         })
         .map((m: any) => m.name.replace(/^models\//, ''))
@@ -76,7 +72,7 @@ export async function discoverBestModel(key: string): Promise<{ model: string; v
     console.warn('[Gemini] Live-Modellabfrage fehlgeschlagen, nutze Fallbacks:', e);
   }
 
-  return { model: 'gemini-3.8-flash', version: 'v1beta' };
+  return { model: 'gemini-2.5-flash', version: 'v1beta' };
 }
 
 async function executeGeminiRequest(key: string, promptText: string): Promise<string> {
