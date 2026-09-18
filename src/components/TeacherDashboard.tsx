@@ -33,6 +33,7 @@ interface TeacherDashboardProps {
   onSelectBoard: (board: ProjectBoard) => void;
   onOpenConsultationModal?: (board: ProjectBoard) => void;
   onOpenMilestoneEditor?: (board: ProjectBoard) => void;
+  onOpenGuide?: () => void;
 }
 
 const FEEDBACK_SNIPPETS = [
@@ -49,6 +50,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
   onSelectBoard,
   onOpenConsultationModal,
   onOpenMilestoneEditor,
+  onOpenGuide,
 }) => {
   const { currentTeacher, logout } = useAuth();
   const [boards, setBoards] = useState<ProjectBoard[]>([]);
@@ -188,12 +190,25 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
             </div>
           </div>
 
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            {onOpenGuide && (
+              <button
+                onClick={onOpenGuide}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 transition-colors shadow-2xs"
+                title="Lehrer-Handbuch & Praxishilfe öffnen"
+              >
+                <BookOpen className="w-3.5 h-3.5 text-[#F39200]" />
+                <span className="hidden sm:inline">Handbuch</span>
+              </button>
+            )}
+
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* 3 Main Tabs */}

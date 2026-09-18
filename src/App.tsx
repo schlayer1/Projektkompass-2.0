@@ -17,6 +17,8 @@ import { ConsultationModal } from './components/ConsultationModal';
 import { GroupMembersModal } from './components/GroupMembersModal';
 import { PresentationCoachModal } from './components/PresentationCoachModal';
 import { PrintableProjectReport } from './components/PrintableProjectReport';
+import { GuideModal } from './components/GuideModal';
+import { Compass, Sparkles, X } from 'lucide-react';
 import {
   saveBoardToFirestore,
   fetchBoardByCode,
@@ -185,6 +187,22 @@ export function App() {
   const [isPresentationCoachOpen, setIsPresentationCoachOpen] = useState(false);
   const [presentationCoachTask, setPresentationCoachTask] = useState<Task | null>(null);
   const [modalTargetBoard, setModalTargetBoard] = useState<ProjectBoard | null>(null);
+  // Guide & Onboarding
+  const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
+  const [guideInitialRole, setGuideInitialRole] = useState<'student' | 'teacher'>('student');
+  const [showWelcomeBanner, setShowWelcomeBanner] = useState(() => {
+    return !localStorage.getItem('pk_onboarding_completed') && !localStorage.getItem('pk_welcome_banner_dismissed');
+  });
+
+  const handleOpenGuide = (targetRole?: 'student' | 'teacher') => {
+    setGuideInitialRole(targetRole || (role === 'teacher' ? 'teacher' : 'student'));
+    setIsGuideModalOpen(true);
+  };
+
+  const handleDismissWelcomeBanner = () => {
+    setShowWelcomeBanner(false);
+    localStorage.setItem('pk_welcome_banner_dismissed', 'true');
+  };
 
   // Altdaten-Erkennung
   const [detectedLegacyData, setDetectedLegacyData] = useState<Partial<ProjectBoard> | null>(null);
@@ -539,12 +557,56 @@ export function App() {
         }}
         onOpenSettings={() => setIsSettingsModalOpen(true)}
         onOpenMembersModal={() => setIsGroupMembersModalOpen(true)}
+        onOpenGuide={handleOpenGuide}
         isOnline={isOnline}
         offlineQueueCount={offlineCount}
       />
 
       {/* Main Kanban Content */}
       <main className="flex-1 p-4 md:p-6 flex flex-col overflow-hidden max-w-[1600px] w-full mx-auto">
+        {/* Onboarding Welcome Banner (for new visitors) */}
+        {showWelcomeBanner && (
+          <div className="bg-gradient-to-r from-sky-50 via-white to-sky-50 border border-sky-200 rounded-2xl p-3.5 sm:p-4 mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs animate-in fade-in duration-300">
+            <div className="flex items-center gap-3">
+              <div className="bg-[#0B7BA7] text-white p-2 rounded-xl shadow-xs shrink-0">
+                <Compass className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h4 className="text-xs sm:text-sm font-black text-gray-900 leading-tight flex items-center gap-1.5 flex-wrap">
+                  <span>Neu beim Projektkompass?</span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 bg-[#F39200] text-white rounded-md">
+                    Heimbürgeschule Kahla
+                  </span>
+                </h4>
+                <p className="text-xs text-gray-600 m-0 mt-0.5">
+                  Starte jetzt die 2-Minuten-Tour oder schlage jederzeit im bebilderten Handbuch nach.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0 ml-auto sm:ml-0">
+              <button
+                onClick={() => handleOpenGuide('student')}
+                className="px-3.5 py-1.5 bg-[#0B7BA7] hover:bg-[#00558F] text-white text-xs font-bold rounded-xl shadow-xs transition-transform active:scale-95"
+              >
+                🚀 Tour starten
+              </button>
+              <button
+                onClick={() => handleOpenGuide('teacher')}
+                className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-xs font-bold rounded-xl transition-colors"
+              >
+                🎓 Für Lehrer
+              </button>
+              <button
+                onClick={handleDismissWelcomeBanner}
+                className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg ml-1"
+                title="Ausblenden"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Meilenstein-Timeline (Roadmap) */}
         <MilestoneTimeline
           milestones={board.milestones || []}
@@ -612,6 +674,7 @@ export function App() {
       <TeacherDashboard
         isOpen={isTeacherDashboardOpen}
         onClose={() => setIsTeacherDashboardOpen(false)}
+        onOpenGuide={() => handleOpenGuide('teacher')}
         onSelectBoard={(selectedBoard) => setBoard(selectedBoard)}
         onOpenConsultationModal={(targetBoard) => {
           setModalTargetBoard(targetBoard);
@@ -671,6 +734,12 @@ export function App() {
           setIsPresentationCoachOpen(false);
           setPresentationCoachTask(null);
         }}
+      />
+
+      <GuideModal
+        isOpen={isGuideModalOpen}
+        onClose={() => setIsGuideModalOpen(false)}
+        initialRole={guideInitialRole}
       />
 
       <LegacyMigrationModal

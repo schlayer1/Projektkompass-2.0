@@ -17,6 +17,7 @@ import {
   Users,
   LogOut,
   ChevronDown,
+  BookOpen,
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -29,6 +30,7 @@ interface HeaderProps {
   onOpenTeacherDashboard: () => void;
   onOpenSettings: () => void;
   onOpenMembersModal: () => void;
+  onOpenGuide: (role?: 'student' | 'teacher') => void;
   isOnline: boolean;
   offlineQueueCount: number;
 }
@@ -43,6 +45,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenTeacherDashboard,
   onOpenSettings,
   onOpenMembersModal,
+  onOpenGuide,
   isOnline,
   offlineQueueCount,
 }) => {
@@ -215,6 +218,16 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="hidden sm:inline">Lehrkraft</span>
             </button>
           )}
+
+          {/* Guide / Handbuch Button */}
+          <button
+            onClick={() => onOpenGuide(role === 'teacher' ? 'teacher' : 'student')}
+            className="flex items-center gap-1 bg-sky-50 hover:bg-sky-100 text-[#0B7BA7] border border-sky-200 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg text-xs font-bold transition-all shadow-2xs active:scale-95 shrink-0"
+            title="Handbuch & Onboarding öffnen"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-[#0B7BA7]" />
+            <span className="hidden sm:inline">Guide</span>
+          </button>
 
           <button
             onClick={onOpenSettings}
