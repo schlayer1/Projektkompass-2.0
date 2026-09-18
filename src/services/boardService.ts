@@ -121,19 +121,39 @@ export const INITIAL_TEST_BOARDS: ProjectBoard[] = [
   },
 ];
 
+// Entfernt alle undefined Felder rekursiv, damit Firestore nicht mit 'Unsupported field value: undefined' abbricht
+function cleanFirestoreData(obj: any): any {
+  if (obj === null || obj === undefined) return null;
+  if (Array.isArray(obj)) return obj.map(cleanFirestoreData);
+  if (typeof obj !== 'object') return obj;
+  // FieldValue Objekte wie serverTimestamp() nicht anfassen
+  if (obj._methodName || (obj.constructor && obj.constructor.name === 'FieldValue')) return obj;
+
+  const cleaned: any = {};
+  for (const key of Object.keys(obj)) {
+    const val = obj[key];
+    if (val !== undefined) {
+      cleaned[key] = cleanFirestoreData(val);
+    }
+  }
+  return cleaned;
+}
+
 // Speichert ein Board in Firestore (mit automatischem Offline-Fallback)
 export async function saveBoardToFirestore(
   board: ProjectBoard,
   useOfflineFallback = true
 ): Promise<string> {
   const docId = board.id || doc(collection(db, BOARDS_COLLECTION)).id;
-  const boardData = {
+  const rawBoardData = {
     ...board,
     id: docId,
     schoolYear: board.schoolYear || calculateSchoolYear(),
     updatedAt: new Date().toISOString(),
     serverTimestamp: serverTimestamp(),
   };
+
+  const boardData = cleanFirestoreData(rawBoardData);
 
   try {
     const docRef = doc(db, BOARDS_COLLECTION, docId);
