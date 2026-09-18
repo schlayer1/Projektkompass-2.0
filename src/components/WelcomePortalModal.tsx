@@ -1,7 +1,8 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getAllTeachers, getTeacherByPin } from '../data/teachers';
 import { SCHOOL_CLASSES } from '../data/schoolClasses';
+import { fetchTemplates } from '../services/boardService';
 import {
   Compass,
   Users,
@@ -14,8 +15,9 @@ import {
   AlertCircle,
   Loader2,
   BookOpen,
+  Layers,
 } from 'lucide-react';
-import { ProjectType } from '../types/project';
+import { ProjectType, Milestone, ProjectBoard } from '../types/project';
 
 interface NewProjectPayload {
   projectName: string;
@@ -26,6 +28,7 @@ interface NewProjectPayload {
   teacherName?: string;
   subject?: string;
   projectType: ProjectType;
+  customMilestones?: Milestone[];
 }
 
 interface WelcomePortalModalProps {
@@ -67,11 +70,52 @@ export const WelcomePortalModal: React.FC<WelcomePortalModalProps> = ({
   const [customClass, setCustomClass] = useState('');
   const [newGroupName, setNewGroupName] = useState('Gruppe 1');
   const [newMembersInput, setNewMembersInput] = useState('');
-  const [newProjectType, setNewProjectType] = useState<ProjectType>('grad10');
   const [selectedTeacherId, setSelectedTeacherId] = useState('');
   const [newSubject, setNewSubject] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState('');
+
+  // Class Templates state
+  const [classTemplates, setClassTemplates] = useState<ProjectBoard[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('preset_grad10');
+  const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
+
+  // Load templates matching the chosen class
+  useEffect(() => {
+    if (isOpen && studentMode === 'create') {
+      const actualClass = newClass === 'custom' ? customClass.trim() || '10a' : newClass;
+      setIsLoadingTemplates(true);
+      fetchTemplates(actualClass)
+        .then((tpls) => {
+          setClassTemplates(tpls);
+          if (actualClass.startsWith('10')) {
+            setSelectedTemplateId('preset_grad10');
+          } else if (tpls.length > 0) {
+            setSelectedTemplateId(tpls[0].id);
+          } else {
+            setSelectedTemplateId('preset_regular');
+          }
+        })
+        .catch(() => setClassTemplates([]))
+        .finally(() => setIsLoadingTemplates(false));
+    }
+  }, [isOpen, studentMode, newClass, customClass]);
+
+  const handleSelectTemplateCard = (tplId: string) => {
+    setSelectedTemplateId(tplId);
+    const tpl = classTemplates.find((t) => t.id === tplId);
+    if (tpl) {
+      if (!newTitle.trim()) {
+        setNewTitle(tpl.projectName);
+      }
+      if (tpl.teacherId) {
+        setSelectedTeacherId(tpl.teacherId);
+      }
+      if (tpl.subject) {
+        setNewSubject(tpl.subject);
+      }
+    }
+  };
 
   // Teacher State
   const [teacherPin, setTeacherPin] = useState('');
@@ -140,7 +184,10 @@ export const WelcomePortalModal: React.FC<WelcomePortalModalProps> = ({
       .filter((m) => m.length > 0);
 
     const actualClass = newClass === 'custom' ? customClass.trim() || '10a' : newClass;
-    const teacherObj = teachers.find((t) => t.id === selectedTeacherId);
+    const chosenTemplate = classTemplates.find((t) => t.id === selectedTemplateId);
+    const teacherObj = teachers.find(
+      (t) => t.id === (selectedTeacherId || chosenTemplate?.teacherId)
+    );
 
     setCreateError('');
     setIsCreating(true);
@@ -150,10 +197,14 @@ export const WelcomePortalModal: React.FC<WelcomePortalModalProps> = ({
         studentClass: actualClass,
         studentName: newGroupName.trim() || 'Gruppe 1',
         groupMembers: members,
-        teacherId: teacherObj?.id,
-        teacherName: teacherObj ? teacherObj.displayName : undefined,
-        subject: newSubject.trim() || undefined,
-        projectType: newProjectType,
+        teacherId: teacherObj?.id || chosenTemplate?.teacherId,
+        teacherName: teacherObj ? teacherObj.displayName : (chosenTemplate?.teacherName || undefined),
+        subject: newSubject.trim() || chosenTemplate?.subject || undefined,
+        projectType:
+          selectedTemplateId === 'preset_grad10'
+            ? 'grad10'
+            : (chosenTemplate?.projectType || 'regular'),
+        customMilestones: chosenTemplate?.milestones,
       });
     } catch (err: any) {
       setCreateError(err.message || 'Fehler beim Anlegen des Projekts.');
@@ -375,62 +426,183 @@ export const WelcomePortalModal: React.FC<WelcomePortalModalProps> = ({
               {/* SUB-MODE: CREATE NEW PROJECT */}
               {studentMode === 'create' && (
                 <form onSubmit={handleCreateSubmit} className="flex flex-col gap-4">
-                  {/* Project Type Radio Cards */}
-                  <div>
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 block">
-                      Art des Projekts
-                    </label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                      <button
-                        type="button"
-                        onClick={() => setNewProjectType('grad10')}
-                        className={`p-3 rounded-2xl border text-left transition-all flex flex-col gap-1 ${
-                          newProjectType === 'grad10'
-                            ? 'border-[#0B7BA7] bg-sky-50/60 ring-2 ring-[#0B7BA7]/20'
-                            : 'border-slate-200 hover:border-slate-300 bg-white'
-                        }`}
+                  {/* Schritt 1: Klasse wählen */}
+                  <div className="bg-slate-50 border border-slate-200 p-3.5 rounded-2xl">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
+                        1. Klasse auswählen *
+                      </label>
+                      <span className="text-[11px] text-slate-500">
+                        Filtert passende Vorlagen & Meilensteine
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <select
+                        value={newClass}
+                        onChange={(e) => setNewClass(e.target.value)}
+                        className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-sm font-bold text-slate-800 focus:outline-none focus:border-[#0B7BA7]"
                       >
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold text-xs sm:text-sm text-slate-900">
-                            Jg. 10 Abschlussarbeit
-                          </span>
-                          {newProjectType === 'grad10' && (
-                            <CheckCircle2 className="w-4 h-4 text-[#0B7BA7]" />
-                          )}
-                        </div>
-                        <p className="text-[11px] text-slate-500">
-                          Inkl. der 6 offiziellen Thüringer Prüfungsetappen & Termine
-                        </p>
-                      </button>
+                        {SCHOOL_CLASSES.map((cls) => (
+                          <option key={cls} value={cls}>
+                            Klasse {cls}
+                          </option>
+                        ))}
+                        <option value="custom">Andere Klasse / Kurs...</option>
+                      </select>
+                      {newClass === 'custom' && (
+                        <input
+                          type="text"
+                          value={customClass}
+                          onChange={(e) => setCustomClass(e.target.value)}
+                          placeholder="z.B. Kurs 11 oder WTR-Kurs"
+                          className="w-full p-2.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:border-[#0B7BA7]"
+                        />
+                      )}
+                    </div>
+                  </div>
 
+                  {/* Schritt 2: Vorlage & Zeitplan */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-700 block">
+                        2. Projektvorlage & Zeitplan wählen
+                      </label>
+                      {isLoadingTemplates && (
+                        <span className="flex items-center gap-1.5 text-[11px] text-[#0B7BA7] font-medium">
+                          <Loader2 className="w-3 h-3 animate-spin" /> Vorlagen laden...
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                      {/* Abschlussarbeit Jg. 10 Preset (nur wenn Klasse 10) */}
+                      {(newClass.startsWith('10') || (newClass === 'custom' && customClass.startsWith('10'))) && (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedTemplateId('preset_grad10')}
+                          className={`w-full p-3 rounded-2xl border text-left transition-all flex items-start justify-between gap-3 ${
+                            selectedTemplateId === 'preset_grad10'
+                              ? 'border-[#0B7BA7] bg-sky-50/70 ring-2 ring-[#0B7BA7]/20 shadow-sm'
+                              : 'border-slate-200 hover:border-slate-300 bg-white'
+                          }`}
+                        >
+                          <div className="flex items-start gap-2.5">
+                            <div className="w-8 h-8 rounded-xl bg-blue-100 text-[#0B7BA7] flex items-center justify-center shrink-0 mt-0.5">
+                              <GraduationCap className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-xs sm:text-sm text-slate-900">
+                                  Jg. 10 Abschlussarbeit
+                                </span>
+                                <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-bold rounded-full">
+                                  Standard Thüringen
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-slate-600 mt-0.5">
+                                Die 6 offiziellen Thüringer Prüfungsetappen, Termine & Vorbereitung
+                              </p>
+                              <div className="text-[10px] font-semibold text-slate-600 mt-1">
+                                6 vordefinierte Meilensteine
+                              </div>
+                            </div>
+                          </div>
+                          {selectedTemplateId === 'preset_grad10' && (
+                            <CheckCircle2 className="w-5 h-5 text-[#0B7BA7] shrink-0 mt-0.5" />
+                          )}
+                        </button>
+                      )}
+
+                      {/* Lehrer-Vorlagen für diese Klasse */}
+                      {classTemplates.map((tpl) => {
+                        const isSelected = selectedTemplateId === tpl.id;
+                        return (
+                          <button
+                            key={tpl.id}
+                            type="button"
+                            onClick={() => handleSelectTemplateCard(tpl.id)}
+                            className={`w-full p-3 rounded-2xl border text-left transition-all flex items-start justify-between gap-3 ${
+                              isSelected
+                                ? 'border-[#0B7BA7] bg-sky-50/70 ring-2 ring-[#0B7BA7]/20 shadow-sm'
+                                : 'border-slate-200 hover:border-slate-300 bg-white'
+                            }`}
+                          >
+                            <div className="flex items-start gap-2.5">
+                              <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 mt-0.5">
+                                <BookOpen className="w-4 h-4" />
+                              </div>
+                              <div>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="font-bold text-xs sm:text-sm text-slate-900">
+                                    {tpl.projectName}
+                                  </span>
+                                  {tpl.teacherName && (
+                                    <span className="px-2 py-0.5 bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-bold rounded-full">
+                                      {tpl.teacherName}
+                                    </span>
+                                  )}
+                                  {tpl.subject && (
+                                    <span className="px-2 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-bold rounded-full">
+                                      {tpl.subject}
+                                    </span>
+                                  )}
+                                </div>
+                                {tpl.templateDescription && (
+                                  <p className="text-[11px] text-slate-600 mt-0.5 line-clamp-2">
+                                    {tpl.templateDescription}
+                                  </p>
+                                )}
+                                <div className="text-[10px] font-semibold text-slate-600 mt-1">
+                                  {tpl.milestones?.length || 0} Meilensteine vordefiniert
+                                </div>
+                              </div>
+                            </div>
+                            {isSelected && (
+                              <CheckCircle2 className="w-5 h-5 text-[#0B7BA7] shrink-0 mt-0.5" />
+                            )}
+                          </button>
+                        );
+                      })}
+
+                      {/* Fallback / Freies Projekt */}
                       <button
                         type="button"
-                        onClick={() => setNewProjectType('regular')}
-                        className={`p-3 rounded-2xl border text-left transition-all flex flex-col gap-1 ${
-                          newProjectType === 'regular'
-                            ? 'border-[#0B7BA7] bg-sky-50/60 ring-2 ring-[#0B7BA7]/20'
+                        onClick={() => setSelectedTemplateId('preset_regular')}
+                        className={`w-full p-3 rounded-2xl border text-left transition-all flex items-start justify-between gap-3 ${
+                          selectedTemplateId === 'preset_regular'
+                            ? 'border-[#0B7BA7] bg-sky-50/70 ring-2 ring-[#0B7BA7]/20 shadow-sm'
                             : 'border-slate-200 hover:border-slate-300 bg-white'
                         }`}
                       >
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold text-xs sm:text-sm text-slate-900">
-                            Freies Projekt / Facharbeit
-                          </span>
-                          {newProjectType === 'regular' && (
-                            <CheckCircle2 className="w-4 h-4 text-[#0B7BA7]" />
-                          )}
+                        <div className="flex items-start gap-2.5">
+                          <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center shrink-0 mt-0.5">
+                            <Layers className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-xs sm:text-sm text-slate-900">
+                                Freies Projekt / Eigener Zeitplan
+                              </span>
+                              <span className="px-2 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-bold rounded-full">
+                                Individuell
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-slate-500 mt-0.5">
+                              Eigene Meilensteine und Termine nach Bedarf selbst anlegen
+                            </p>
+                          </div>
                         </div>
-                        <p className="text-[11px] text-slate-500">
-                          Für Klassen 5–9, Projektwochen und selbst definierte Meilensteine
-                        </p>
+                        {selectedTemplateId === 'preset_regular' && (
+                          <CheckCircle2 className="w-5 h-5 text-[#0B7BA7] shrink-0 mt-0.5" />
+                        )}
                       </button>
                     </div>
                   </div>
 
-                  {/* Project Name */}
+                  {/* Schritt 3: Thema & Projektdaten */}
                   <div>
                     <label className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-1 block">
-                      Projektthema / Titel *
+                      3. Projektthema / Titel *
                     </label>
                     <input
                       type="text"
@@ -445,38 +617,11 @@ export const WelcomePortalModal: React.FC<WelcomePortalModalProps> = ({
                     />
                   </div>
 
-                  {/* Grid: Class & Group Name */}
+                  {/* Grid: Group Name & Members */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <label className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-1 block">
-                        Klasse *
-                      </label>
-                      <select
-                        value={newClass}
-                        onChange={(e) => setNewClass(e.target.value)}
-                        className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-bold text-slate-800 focus:outline-none focus:border-[#0B7BA7]"
-                      >
-                        {SCHOOL_CLASSES.map((cls) => (
-                          <option key={cls} value={cls}>
-                            Klasse {cls}
-                          </option>
-                        ))}
-                        <option value="custom">Andere Klasse...</option>
-                      </select>
-                      {newClass === 'custom' && (
-                        <input
-                          type="text"
-                          value={customClass}
-                          onChange={(e) => setCustomClass(e.target.value)}
-                          placeholder="z.B. 7c oder WTR-Kurs"
-                          className="w-full p-2 mt-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold"
-                        />
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-1 block">
-                        Gruppenname
+                        Gruppenname (optional)
                       </label>
                       <input
                         type="text"
@@ -486,20 +631,19 @@ export const WelcomePortalModal: React.FC<WelcomePortalModalProps> = ({
                         className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-bold text-slate-800 focus:outline-none focus:border-[#0B7BA7]"
                       />
                     </div>
-                  </div>
 
-                  {/* Group Members */}
-                  <div>
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-1 block">
-                      Gruppenmitglieder (Vor- und Nachnamen, mit Komma trennen)
-                    </label>
-                    <input
-                      type="text"
-                      value={newMembersInput}
-                      onChange={(e) => setNewMembersInput(e.target.value)}
-                      placeholder="z.B. Anna Schmidt, Lisa Weber, Tom Müller"
-                      className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-[#0B7BA7]"
-                    />
+                    <div>
+                      <label className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-1 block">
+                        Gruppenmitglieder (mit Komma trennen)
+                      </label>
+                      <input
+                        type="text"
+                        value={newMembersInput}
+                        onChange={(e) => setNewMembersInput(e.target.value)}
+                        placeholder="z.B. Anna Schmidt, Lisa Weber"
+                        className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-[#0B7BA7]"
+                      />
+                    </div>
                   </div>
 
                   {/* Grid: Teacher & Subject */}
@@ -540,7 +684,7 @@ export const WelcomePortalModal: React.FC<WelcomePortalModalProps> = ({
                   <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
                     <span>
-                      Das Projekt startet mit <strong>vollständig leeren Aufgaben-Spalten</strong>. Ihr erhaltet sofort euren neuen Projekt-Code!
+                      Das Projekt startet mit <strong>vollständig leeren Aufgaben-Spalten</strong>. Zeitplan und Meilensteine werden automatisch übernommen!
                     </span>
                   </div>
 

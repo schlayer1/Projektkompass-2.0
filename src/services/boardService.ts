@@ -191,6 +191,7 @@ export async function fetchBoardsForTeacher(
     }
 
     return merged.filter((b) => {
+      if (b.isClassTemplate) return false; // Vorlagen separat behandeln
       if (filterSchoolYear && filterSchoolYear !== 'Alle' && b.schoolYear !== filterSchoolYear) return false;
       if (filterClass && filterClass !== 'Alle' && b.studentClass !== filterClass) return false;
       return true;
@@ -198,11 +199,48 @@ export async function fetchBoardsForTeacher(
   } catch (err) {
     console.warn('Nutze lokale Testboards:', err);
     return INITIAL_TEST_BOARDS.filter((b) => {
+      if (b.isClassTemplate) return false;
       if (filterSchoolYear && filterSchoolYear !== 'Alle' && b.schoolYear !== filterSchoolYear) return false;
       if (filterClass && filterClass !== 'Alle' && b.studentClass !== filterClass) return false;
       return true;
     });
   }
+}
+
+// Lädt alle Vorlagen (Templates) aus Firestore
+export async function fetchTemplates(filterClass?: string): Promise<ProjectBoard[]> {
+  try {
+    const snap = await getDocs(collection(db, BOARDS_COLLECTION));
+    const all = snap.docs.map((d) => ({
+      id: d.id,
+      ...(d.data() as Omit<ProjectBoard, 'id'>),
+    }));
+
+    const templates = all.filter((b) => b.isClassTemplate === true);
+    if (!filterClass || filterClass === 'Alle') return templates;
+
+    const cleanFilter = filterClass.trim().toLowerCase();
+    return templates.filter((t) => {
+      if (!t.targetClasses || t.targetClasses.length === 0) return true;
+      return (
+        t.targetClasses.includes('Alle') ||
+        t.targetClasses.some((c) => c.toLowerCase() === cleanFilter)
+      );
+    });
+  } catch (e) {
+    console.warn('Fehler beim Laden der Vorlagen:', e);
+    return [];
+  }
+}
+
+// Speichert eine Vorlage
+export async function saveTemplate(template: ProjectBoard): Promise<string> {
+  return saveBoardToFirestore({
+    ...template,
+    isClassTemplate: true,
+    studentName: template.studentName || 'Projektvorlage',
+    studentClass: template.studentClass || (template.targetClasses?.[0] || 'Alle'),
+  });
 }
 
 // Speichert eine Lehrer-Notiz / Feedback an die Gruppe
@@ -215,7 +253,7 @@ export async function saveTeacherBoardFeedback(boardId: string, notes: string): 
   }
 }
 
-// Löscht ein Board
+// Löscht ein Board oder eine Vorlage
 export async function deleteBoardDoc(boardId: string): Promise<void> {
   if (boardId.startsWith('test_')) return;
   try {

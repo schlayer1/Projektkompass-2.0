@@ -551,6 +551,7 @@ export function App() {
     teacherName?: string;
     subject?: string;
     projectType: ProjectType;
+    customMilestones?: Milestone[];
   }) => {
     const newCode = generateBoardCode();
     const newBoard: ProjectBoard = {
@@ -569,7 +570,9 @@ export function App() {
       journalBad: '',
       journalNext: '',
       milestones:
-        data.projectType === 'grad10'
+        data.customMilestones && data.customMilestones.length > 0
+          ? data.customMilestones
+          : data.projectType === 'grad10'
           ? getDefaultGrade10Milestones()
           : getDefaultRegularMilestones(),
       consultations: [],

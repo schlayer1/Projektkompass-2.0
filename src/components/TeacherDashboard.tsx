@@ -4,10 +4,13 @@ import { SCHOOL_CLASSES } from '../data/schoolClasses';
 import { useAuth } from '../context/AuthContext';
 import {
   fetchBoardsForTeacher,
+  fetchTemplates,
   saveTeacherBoardFeedback,
   saveBoardToFirestore,
+  deleteBoardDoc,
 } from '../services/boardService';
 import { generateTeacherProjectReport } from '../services/geminiService';
+import { TemplateEditorModal } from './TemplateEditorModal';
 import {
   GraduationCap,
   X,
@@ -26,6 +29,8 @@ import {
   Layers,
   BookOpen,
   Plus,
+  Edit3,
+  Trash2,
 } from 'lucide-react';
 
 interface TeacherDashboardProps {
@@ -57,10 +62,15 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
   const [boards, setBoards] = useState<ProjectBoard[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Tabs: 'my_grad10' | 'my_regular' | 'all'
-  const [activeTab, setActiveTab] = useState<'my_grad10' | 'my_regular' | 'all'>('my_grad10');
+  // Tabs: 'my_grad10' | 'my_regular' | 'templates' | 'all'
+  const [activeTab, setActiveTab] = useState<'my_grad10' | 'my_regular' | 'templates' | 'all'>('my_grad10');
   const [classFilter, setClassFilter] = useState('Alle');
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Templates State
+  const [templates, setTemplates] = useState<ProjectBoard[]>([]);
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+  const [selectedTemplateForEdit, setSelectedTemplateForEdit] = useState<ProjectBoard | null>(null);
 
   // Feedback State
   const [activeFeedbackBoardId, setActiveFeedbackBoardId] = useState<string | null>(null);
@@ -86,12 +96,26 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
   const loadBoards = async () => {
     setIsLoading(true);
     try {
-      const data = await fetchBoardsForTeacher();
+      const [data, tpls] = await Promise.all([
+        fetchBoardsForTeacher(),
+        fetchTemplates(),
+      ]);
       setBoards(data);
+      setTemplates(tpls);
     } catch (e) {
-      console.warn('Fehler beim Laden der Boards:', e);
+      console.warn('Fehler beim Laden der Boards/Templates:', e);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleDeleteTemplate = async (templateId: string) => {
+    if (!confirm('Möchtest du diese Projektvorlage wirklich löschen?')) return;
+    try {
+      await deleteBoardDoc(templateId);
+      setTemplates((prev) => prev.filter((t) => t.id !== templateId));
+    } catch (e) {
+      alert('Löschen der Vorlage fehlgeschlagen.');
     }
   };
 
@@ -192,6 +216,18 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                setSelectedTemplateForEdit(null);
+                setIsTemplateModalOpen(true);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#F39200] hover:bg-[#D97A09] text-white transition-all shadow-xs active:scale-95 shrink-0"
+              title="Neue Vorlage für Klassen anlegen"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Neue Vorlage</span>
+            </button>
+
             {onOpenGuide && (
               <button
                 onClick={onOpenGuide}
@@ -212,7 +248,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
           </div>
         </div>
 
-        {/* 3 Main Tabs */}
+        {/* 4 Main Tabs */}
         <div className="bg-slate-100 px-6 pt-2 border-b border-gray-200 flex gap-2 shrink-0 overflow-x-auto">
           <button
             onClick={() => setActiveTab('my_grad10')}
@@ -239,6 +275,20 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
             <span>📚 Meine Unterrichtsprojekte</span>
             <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-200 text-gray-700">
               {boards.filter((b) => b.projectType !== 'grad10' && (b.teacherId === currentTeacherId || (b.teacherName || '').toLowerCase().includes(currentTeacherName))).length}
+            </span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('templates')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-t-xl text-xs sm:text-sm font-bold transition-all border-t border-x ${
+              activeTab === 'templates'
+                ? 'bg-white text-[#F39200] border-gray-200 shadow-sm'
+                : 'text-gray-600 hover:bg-white/60 border-transparent'
+            }`}
+          >
+            <span>📋 Projektvorlagen & Timelines</span>
+            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-900 font-bold">
+              {templates.length}
             </span>
           </button>
 
@@ -297,7 +347,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
         {/* Content Area */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-5">
           {/* 🚨 Blocker Live-Radar */}
-          {blockedBoards.length > 0 && (
+          {activeTab !== 'templates' && blockedBoards.length > 0 && (
             <div className="bg-red-50 border-2 border-red-300 rounded-2xl p-4 shadow-sm shrink-0">
               <div className="flex items-center gap-2 text-red-800 font-black text-xs sm:text-sm mb-2 uppercase tracking-wider">
                 <AlertOctagon className="w-4 h-4 text-red-600" />
@@ -350,22 +400,127 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
             </div>
           )}
 
-          {/* Board Grid */}
-          {isLoading ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-gray-400 gap-2 py-16">
-              <Loader2 className="w-8 h-8 animate-spin text-[#0B7BA7]" />
-              <span>Projekte werden geladen...</span>
-            </div>
-          ) : filteredBoards.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-gray-400 py-16 text-center">
-              <span>Keine Projektboards in diesem Bereich gefunden.</span>
-              <p className="text-xs text-gray-500 mt-1">
-                {activeTab === 'my_grad10'
-                  ? 'Bitten Sie Ihre 10er Gruppen, Sie als betreuende Lehrkraft im Board auszuwählen.'
-                  : 'Wechseln Sie zum Reiter „Alle Schulprojekte“, um alle Projekte einzusehen.'}
-              </p>
+          {/* Content Views: Templates vs Board Grid */}
+          {activeTab === 'templates' ? (
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-wrap items-center justify-between gap-2 bg-amber-50/60 border border-amber-200 rounded-2xl p-4">
+                <div>
+                  <h3 className="text-sm font-black text-amber-950">
+                    Eigene Projektvorlagen für deine Klassen
+                  </h3>
+                  <p className="text-xs text-amber-800 mt-0.5">
+                    Erstelle Vorlagen mit festen Meilensteinen und Fälligkeiten. Schüler der ausgewählten Klassen können diese Vorlage beim Erstellen eines neuen Projekts direkt auswählen.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedTemplateForEdit(null);
+                    setIsTemplateModalOpen(true);
+                  }}
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-[#F39200] hover:bg-[#D97A09] text-white transition-all shadow-sm active:scale-95 shrink-0"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Neue Vorlage erstellen</span>
+                </button>
+              </div>
+
+              {templates.length === 0 ? (
+                <div className="flex flex-col items-center justify-center text-slate-400 py-16 text-center bg-white border border-slate-200 rounded-2xl p-6">
+                  <Layers className="w-12 h-12 text-slate-300 mb-2" />
+                  <span className="font-bold text-sm text-slate-700">Noch keine Projektvorlagen angelegt</span>
+                  <p className="text-xs text-slate-500 mt-1 max-w-md">
+                    Klicke oben auf „Neue Vorlage erstellen“, um z.B. für eine 8. Klasse eine Projektwoche mit festen Meilensteinen vorzubereiten.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {templates.map((tpl) => (
+                    <div
+                      key={tpl.id}
+                      className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 hover:shadow-md transition-all flex flex-col justify-between"
+                    >
+                      <div>
+                        <div className="flex justify-between items-start gap-2 mb-2">
+                          <div className="flex flex-wrap gap-1 items-center">
+                            {(tpl.targetClasses && tpl.targetClasses.length > 0
+                              ? tpl.targetClasses
+                              : ['Alle']
+                            ).map((cls) => (
+                              <span
+                                key={cls}
+                                className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-200"
+                              >
+                                Kl. {cls}
+                              </span>
+                            ))}
+                          </div>
+                          <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-sky-50 text-[#0B7BA7] border border-sky-200 shrink-0">
+                            {tpl.milestones?.length || 0} Meilensteine
+                          </span>
+                        </div>
+
+                        <h4 className="font-black text-sm text-slate-900 leading-tight mb-1">
+                          {tpl.projectName}
+                        </h4>
+
+                        {tpl.templateDescription && (
+                          <p className="text-xs text-slate-600 mb-2 line-clamp-2">
+                            {tpl.templateDescription}
+                          </p>
+                        )}
+
+                        <div className="text-[11px] text-slate-500 flex items-center gap-1.5 mt-2 pt-2 border-t border-slate-100">
+                          <span>Erstellt von: <strong>{tpl.teacherName || 'Lehrkraft'}</strong></span>
+                          {tpl.subject && <span>• Fach: {tpl.subject}</span>}
+                        </div>
+                      </div>
+
+                      <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedTemplateForEdit(tpl);
+                            setIsTemplateModalOpen(true);
+                          }}
+                          className="flex items-center gap-1 text-xs font-bold text-[#0B7BA7] hover:underline"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                          <span>Bearbeiten</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteTemplate(tpl.id)}
+                          className="flex items-center gap-1 text-xs font-bold text-red-500 hover:text-red-700 p-1"
+                          title="Vorlage löschen"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ) : (
+            <>
+              {/* Board Grid */}
+              {isLoading ? (
+                <div className="flex-1 flex flex-col items-center justify-center text-gray-400 gap-2 py-16">
+                  <Loader2 className="w-8 h-8 animate-spin text-[#0B7BA7]" />
+                  <span>Projekte werden geladen...</span>
+                </div>
+              ) : filteredBoards.length === 0 ? (
+                <div className="flex-1 flex flex-col items-center justify-center text-gray-400 py-16 text-center">
+                  <span>Keine Projektboards in diesem Bereich gefunden.</span>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {activeTab === 'my_grad10'
+                      ? 'Bitten Sie Ihre 10er Gruppen, Sie als betreuende Lehrkraft im Board auszuwählen.'
+                      : 'Wechseln Sie zum Reiter „Alle Schulprojekte“, um alle Projekte einzusehen.'}
+                  </p>
+                </div>
+              ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredBoards.map((b) => {
                 const total = b.tasks.length;
@@ -564,7 +719,9 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
               })}
             </div>
           )}
-        </div>
+        </>
+      )}
+    </div>
 
         {/* KI-Bericht Modal */}
         {aiReportBoard && (
@@ -646,6 +803,19 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
             </div>
           </div>
         )}
+
+        {/* Template Editor Modal */}
+        <TemplateEditorModal
+          isOpen={isTemplateModalOpen}
+          initialTemplate={selectedTemplateForEdit}
+          onClose={() => {
+            setIsTemplateModalOpen(false);
+            setSelectedTemplateForEdit(null);
+          }}
+          onSaved={() => {
+            loadBoards();
+          }}
+        />
       </div>
     </div>
   );

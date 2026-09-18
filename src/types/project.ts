@@ -82,6 +82,8 @@ export interface ProjectBoard {
   consultations?: ConsultationRecord[];
   isClassTemplate?: boolean;
   templateGrade?: string;
+  targetClasses?: string[]; // z.B. ['8a', '8b'] oder ['Alle']
+  templateDescription?: string;
   teacherNotes?: string;
   updatedAt: string;
   createdAt?: string;
