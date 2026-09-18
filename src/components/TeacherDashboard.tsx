@@ -192,56 +192,60 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-5">
-      <div className="bg-slate-50 rounded-2xl shadow-2xl w-full max-w-6xl h-[94vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 border border-slate-300">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-1 sm:p-5">
+      <div className="bg-slate-50 rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-6xl h-[98vh] sm:h-[94vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 border border-slate-300">
         {/* Header */}
-        <div className="bg-white px-6 py-3.5 border-b border-gray-200 flex justify-between items-center shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="bg-[#F39200] text-white p-2 rounded-xl shadow-sm">
-              <GraduationCap className="w-6 h-6" />
+        <div className="bg-white px-3 sm:px-6 py-2.5 sm:py-3.5 border-b border-gray-200 flex justify-between items-center shrink-0 gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="bg-[#F39200] text-white p-1.5 sm:p-2 rounded-xl shadow-sm shrink-0">
+              <GraduationCap className="w-5 h-5 sm:w-6 h-6" />
             </div>
-            <div>
-              <h2 className="text-lg sm:text-xl font-black text-gray-900 leading-tight flex items-center gap-2">
-                <span>Lehrer-Cockpit</span>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <h2 className="text-base sm:text-lg font-black text-gray-900 leading-tight shrink-0">
+                  Lehrer-Cockpit
+                </h2>
                 {currentTeacher && (
-                  <span className="text-xs font-bold text-[#0B7BA7] bg-sky-50 px-2 py-0.5 rounded-full border border-sky-200">
+                  <span className="text-[10px] sm:text-xs font-bold text-[#0B7BA7] bg-sky-50 px-2 py-0.5 rounded-full border border-sky-200 truncate max-w-[120px] sm:max-w-[200px]">
                     {currentTeacher.displayName}
                   </span>
                 )}
-              </h2>
-              <p className="text-xs text-gray-500 font-medium">
+              </div>
+              <p className="text-[11px] text-gray-500 font-medium hidden sm:block truncate">
                 Regelschule Heimbürgeschule Kahla • Projektbegleitung & Notenvorbereitung
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <button
               onClick={() => {
                 setSelectedTemplateForEdit(null);
                 setIsTemplateModalOpen(true);
               }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#F39200] hover:bg-[#D97A09] text-white transition-all shadow-xs active:scale-95 shrink-0"
+              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold bg-[#F39200] hover:bg-[#D97A09] text-white transition-all shadow-xs active:scale-95 shrink-0"
               title="Neue Vorlage für Klassen anlegen"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>Neue Vorlage</span>
+              <span className="hidden sm:inline">Neue Vorlage</span>
+              <span className="sm:hidden">Vorlage</span>
             </button>
 
             {onOpenGuide && (
               <button
                 onClick={onOpenGuide}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 transition-colors shadow-2xs"
+                className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 transition-colors shadow-2xs shrink-0"
                 title="Lehrer-Handbuch & Praxishilfe öffnen"
               >
                 <BookOpen className="w-3.5 h-3.5 text-[#F39200]" />
-                <span className="hidden sm:inline">Handbuch</span>
+                <span className="hidden md:inline">Handbuch</span>
               </button>
             )}
 
             <button
               onClick={onClose}
-              className="p-1.5 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+              className="p-1.5 sm:p-2 rounded-xl text-gray-500 hover:text-gray-900 hover:bg-gray-100 bg-slate-100 sm:bg-transparent transition-colors shrink-0"
+              title="Cockpit schließen"
             >
               <X className="w-5 h-5" />
             </button>
@@ -249,16 +253,16 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
         </div>
 
         {/* 4 Main Tabs */}
-        <div className="bg-slate-100 px-6 pt-2 border-b border-gray-200 flex gap-2 shrink-0 overflow-x-auto">
+        <div className="bg-slate-100 px-2 sm:px-6 pt-2 border-b border-gray-200 flex gap-1 sm:gap-2 shrink-0 overflow-x-auto no-scrollbar">
           <button
             onClick={() => setActiveTab('my_grad10')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-t-xl text-xs sm:text-sm font-bold transition-all border-t border-x ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-t-xl text-xs sm:text-sm font-bold transition-all border-t border-x shrink-0 ${
               activeTab === 'my_grad10'
                 ? 'bg-white text-[#0B7BA7] border-gray-200 shadow-sm'
                 : 'text-gray-600 hover:bg-white/60 border-transparent'
             }`}
           >
-            <span>🎓 Meine 10er Abschlussarbeiten</span>
+            <span>🎓 10er Abschluss</span>
             <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-sky-100 text-[#0B7BA7]">
               {boards.filter((b) => b.projectType === 'grad10' && (b.teacherId === currentTeacherId || (b.teacherName || '').toLowerCase().includes(currentTeacherName))).length}
             </span>
@@ -266,13 +270,13 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
 
           <button
             onClick={() => setActiveTab('my_regular')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-t-xl text-xs sm:text-sm font-bold transition-all border-t border-x ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-t-xl text-xs sm:text-sm font-bold transition-all border-t border-x shrink-0 ${
               activeTab === 'my_regular'
                 ? 'bg-white text-[#0B7BA7] border-gray-200 shadow-sm'
                 : 'text-gray-600 hover:bg-white/60 border-transparent'
             }`}
           >
-            <span>📚 Meine Unterrichtsprojekte</span>
+            <span>📚 Meine Projekte</span>
             <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-200 text-gray-700">
               {boards.filter((b) => b.projectType !== 'grad10' && (b.teacherId === currentTeacherId || (b.teacherName || '').toLowerCase().includes(currentTeacherName))).length}
             </span>
@@ -280,13 +284,13 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
 
           <button
             onClick={() => setActiveTab('templates')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-t-xl text-xs sm:text-sm font-bold transition-all border-t border-x ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-t-xl text-xs sm:text-sm font-bold transition-all border-t border-x shrink-0 ${
               activeTab === 'templates'
                 ? 'bg-white text-[#F39200] border-gray-200 shadow-sm'
                 : 'text-gray-600 hover:bg-white/60 border-transparent'
             }`}
           >
-            <span>📋 Projektvorlagen & Timelines</span>
+            <span>📋 Vorlagen</span>
             <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-900 font-bold">
               {templates.length}
             </span>
@@ -294,19 +298,19 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
 
           <button
             onClick={() => setActiveTab('all')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-t-xl text-xs sm:text-sm font-bold transition-all border-t border-x ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-t-xl text-xs sm:text-sm font-bold transition-all border-t border-x shrink-0 ${
               activeTab === 'all'
                 ? 'bg-white text-gray-800 border-gray-200 shadow-sm'
                 : 'text-gray-600 hover:bg-white/60 border-transparent'
             }`}
           >
-            <span>🏫 Alle Schulprojekte ({boards.length})</span>
+            <span>🏫 Alle ({boards.length})</span>
           </button>
         </div>
 
         {/* Filter Bar */}
-        <div className="bg-white px-6 py-2.5 border-b border-gray-200 flex flex-wrap gap-3 items-center justify-between shrink-0">
-          <div className="flex items-center gap-3 flex-1 max-w-md">
+        <div className="bg-white px-3 sm:px-6 py-2.5 border-b border-gray-200 flex flex-wrap gap-2 sm:gap-3 items-center justify-between shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-[200px] max-w-md">
             <div className="relative flex-1">
               <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-2.5" />
               <input
@@ -322,7 +326,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
               <select
                 value={classFilter}
                 onChange={(e) => setClassFilter(e.target.value)}
-                className="text-xs bg-slate-50 border border-gray-300 rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-[#0B7BA7] font-semibold text-gray-700"
+                className="text-xs bg-slate-50 border border-gray-300 rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-[#0B7BA7] font-semibold text-gray-700 shrink-0"
               >
                 <option value="Alle">Alle Klassen</option>
                 {SCHOOL_CLASSES.map((cls) => (
@@ -334,7 +338,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
             )}
           </div>
 
-          <div className="flex items-center gap-2 text-xs font-bold text-gray-600">
+          <div className="flex items-center gap-2 text-xs font-bold text-gray-600 shrink-0">
             <span>{filteredBoards.length} Gruppen</span>
             {blockedBoards.length > 0 && (
               <span className="bg-red-100 text-red-700 border border-red-300 px-2 py-0.5 rounded-full flex items-center gap-1 animate-pulse text-[11px]">

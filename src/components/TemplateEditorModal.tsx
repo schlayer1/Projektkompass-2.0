@@ -197,33 +197,34 @@ export const TemplateEditorModal: React.FC<TemplateEditorModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl border border-slate-200 overflow-hidden flex flex-col my-auto max-h-[92vh] animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-1.5 sm:p-6 overflow-y-auto">
+      <div className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-3xl border border-slate-200 overflow-hidden flex flex-col my-auto max-h-[96vh] sm:max-h-[92vh] animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="bg-gradient-to-r from-[#F39200] to-[#E07D00] text-white p-5 sm:p-6 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-              <Layers className="w-5 h-5 text-white" />
+        <div className="bg-gradient-to-r from-[#F39200] to-[#E07D00] text-white p-3.5 sm:p-6 flex items-center justify-between shrink-0 gap-2">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+              <Layers className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
             </div>
-            <div>
-              <h2 className="text-lg sm:text-xl font-black">
+            <div className="min-w-0">
+              <h2 className="text-base sm:text-xl font-black truncate">
                 {initialTemplate ? 'Projektvorlage bearbeiten' : 'Neue Projektvorlage & Timeline erstellen'}
               </h2>
-              <p className="text-amber-100 text-xs mt-0.5">
+              <p className="text-amber-100 text-[11px] sm:text-xs mt-0.5 line-clamp-1 sm:line-clamp-none">
                 Definiere Meilensteine und Termine für deine Klassen. Schüler sehen diese Vorlage bei der Klassenauswahl.
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-full text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-1.5 sm:p-2 rounded-xl text-white/90 hover:text-white bg-white/10 hover:bg-white/20 transition-colors shrink-0"
+            title="Schließen"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSave} className="flex-1 overflow-y-auto p-5 sm:p-6 flex flex-col gap-6">
+        <form onSubmit={handleSave} className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-5 sm:gap-6">
           {/* General Metadata */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="sm:col-span-2">
