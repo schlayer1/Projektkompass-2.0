@@ -18,6 +18,7 @@ import { GroupMembersModal } from './components/GroupMembersModal';
 import { PresentationCoachModal } from './components/PresentationCoachModal';
 import { PrintableProjectReport } from './components/PrintableProjectReport';
 import { GuideModal } from './components/GuideModal';
+import { WelcomePortalModal } from './components/WelcomePortalModal';
 import { Compass, Sparkles, X } from 'lucide-react';
 import {
   saveBoardToFirestore,
@@ -188,6 +189,7 @@ export function App() {
   const [presentationCoachTask, setPresentationCoachTask] = useState<Task | null>(null);
   const [modalTargetBoard, setModalTargetBoard] = useState<ProjectBoard | null>(null);
   // Guide & Onboarding
+  const [isWelcomePortalOpen, setIsWelcomePortalOpen] = useState(true);
   const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
   const [guideInitialRole, setGuideInitialRole] = useState<'student' | 'teacher'>('student');
   const [showWelcomeBanner, setShowWelcomeBanner] = useState(() => {
@@ -524,18 +526,104 @@ export function App() {
   };
 
   // Board via Code laden
-  const handleLoadByCode = async (code: string) => {
+  const handleLoadByCode = async (code: string): Promise<{ success: boolean; message?: string }> => {
     try {
       const loaded = await fetchBoardByCode(code);
       if (loaded) {
         setBoard(loaded);
-        alert(`✅ Projekt „${loaded.projectName || 'Unbenannt'}“ erfolgreich geladen!`);
+        setIsWelcomePortalOpen(false);
+        return { success: true };
       } else {
-        alert(`Kein Projekt mit dem Code „${code}“ gefunden.`);
+        return { success: false, message: `Kein Projekt mit dem Code „${code}“ gefunden.` };
       }
     } catch (e) {
-      alert('Fehler beim Laden des Projekts.');
+      return { success: false, message: 'Fehler beim Laden aus der Cloud-Datenbank.' };
     }
+  };
+
+  // Neues Projekt anlegen (mit komplett leeren Spalten!)
+  const handleCreateNewProject = async (data: {
+    projectName: string;
+    studentClass: string;
+    studentName: string;
+    groupMembers: string[];
+    teacherId?: string;
+    teacherName?: string;
+    subject?: string;
+    projectType: ProjectType;
+  }) => {
+    const newCode = generateBoardCode();
+    const newBoard: ProjectBoard = {
+      id: 'board_' + Date.now(),
+      boardCode: newCode,
+      projectName: data.projectName,
+      projectType: data.projectType,
+      studentName: data.studentName || 'Gruppe 1',
+      groupMembers: data.groupMembers,
+      studentClass: data.studentClass,
+      teacherId: data.teacherId,
+      teacherName: data.teacherName,
+      subject: data.subject,
+      schoolYear: calculateSchoolYear(),
+      journalGood: '',
+      journalBad: '',
+      journalNext: '',
+      milestones:
+        data.projectType === 'grad10'
+          ? getDefaultGrade10Milestones()
+          : getDefaultRegularMilestones(),
+      consultations: [],
+      tasks: [], // Vollständig leer!
+      history: [],
+      updatedAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+    };
+
+    setBoard(newBoard);
+    setIsWelcomePortalOpen(false);
+
+    try {
+      await saveBoardToFirestore(newBoard);
+    } catch (err) {
+      console.warn('Fehler beim Speichern des neuen Boards in Firestore:', err);
+    }
+  };
+
+  // Backup-Datei (.json) wiederherstellen
+  const handleRestoreBackup = async (file: File): Promise<{ success: boolean; message?: string }> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const content = event.target?.result as string;
+        const parsed = parseLegacyJson(content);
+        if (parsed && Array.isArray(parsed.tasks)) {
+          const restored: ProjectBoard = {
+            ...board,
+            ...parsed,
+            id: 'board_' + Date.now(),
+            boardCode: parsed.boardCode || generateBoardCode(),
+            updatedAt: new Date().toISOString(),
+          };
+          setBoard(restored);
+          setIsWelcomePortalOpen(false);
+          try {
+            await saveBoardToFirestore(restored);
+          } catch (e) {
+            console.warn('Fehler beim Speichern des wiederhergestellten Boards:', e);
+          }
+          resolve({ success: true });
+        } else {
+          resolve({
+            success: false,
+            message: 'Ungültiges Dateiformat. Bitte wähle eine gültige kompass-*.json Datei.',
+          });
+        }
+      };
+      reader.onerror = () => {
+        resolve({ success: false, message: 'Fehler beim Lesen der Datei.' });
+      };
+      reader.readAsText(file);
+    });
   };
 
   return (
@@ -552,12 +640,13 @@ export function App() {
           if (role === 'teacher') {
             setIsTeacherDashboardOpen(true);
           } else {
-            setIsLoginModalOpen(true);
+            setIsWelcomePortalOpen(true);
           }
         }}
         onOpenSettings={() => setIsSettingsModalOpen(true)}
         onOpenMembersModal={() => setIsGroupMembersModalOpen(true)}
         onOpenGuide={handleOpenGuide}
+        onOpenWelcomePortal={() => setIsWelcomePortalOpen(true)}
         isOnline={isOnline}
         offlineQueueCount={offlineCount}
       />
@@ -740,6 +829,17 @@ export function App() {
         isOpen={isGuideModalOpen}
         onClose={() => setIsGuideModalOpen(false)}
         initialRole={guideInitialRole}
+      />
+
+      <WelcomePortalModal
+        isOpen={isWelcomePortalOpen}
+        onLoadByCode={handleLoadByCode}
+        onCreateNewProject={handleCreateNewProject}
+        onRestoreBackup={handleRestoreBackup}
+        onTeacherSuccess={() => {
+          setIsWelcomePortalOpen(false);
+          setIsTeacherDashboardOpen(true);
+        }}
       />
 
       <LegacyMigrationModal

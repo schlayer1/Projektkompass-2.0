@@ -31,6 +31,7 @@ interface HeaderProps {
   onOpenSettings: () => void;
   onOpenMembersModal: () => void;
   onOpenGuide: (role?: 'student' | 'teacher') => void;
+  onOpenWelcomePortal: () => void;
   isOnline: boolean;
   offlineQueueCount: number;
 }
@@ -46,6 +47,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenSettings,
   onOpenMembersModal,
   onOpenGuide,
+  onOpenWelcomePortal,
   isOnline,
   offlineQueueCount,
 }) => {
@@ -227,6 +229,16 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <BookOpen className="w-3.5 h-3.5 text-[#0B7BA7]" />
             <span className="hidden sm:inline">Guide</span>
+          </button>
+
+          {/* Projekt wechseln / Startmenü Button */}
+          <button
+            onClick={onOpenWelcomePortal}
+            className="flex items-center gap-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg text-xs font-bold transition-all shadow-2xs active:scale-95 shrink-0"
+            title="Startmenü öffnen / Projekt wechseln"
+          >
+            <LogOut className="w-3.5 h-3.5 text-slate-500" />
+            <span className="hidden xl:inline">Projekt wechseln</span>
           </button>
 
           <button
