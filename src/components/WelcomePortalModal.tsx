@@ -16,6 +16,7 @@ import {
   Loader2,
   BookOpen,
   Layers,
+  Lightbulb,
 } from 'lucide-react';
 import { ProjectType, Milestone, ProjectBoard } from '../types/project';
 
@@ -346,8 +347,9 @@ export const WelcomePortalModal: React.FC<WelcomePortalModalProps> = ({
                           className="w-full py-3.5 px-4 bg-slate-50 border-2 border-slate-300 rounded-2xl text-center text-xl font-mono font-black uppercase tracking-widest text-[#0B7BA7] focus:outline-none focus:border-[#0B7BA7] focus:bg-white transition-all shadow-inner"
                         />
                       </div>
-                      <p className="text-xs text-slate-500 mt-2">
-                        💡 Den Code habt ihr beim Anlegen oder Speichern des Projekts erhalten.
+                      <p className="text-xs text-slate-500 mt-2 flex items-center justify-center gap-1.5">
+                        <Lightbulb className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                        <span>Den Code habt ihr beim Anlegen oder Speichern des Projekts erhalten.</span>
                       </p>
                     </div>
 

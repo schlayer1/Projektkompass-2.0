@@ -10,6 +10,7 @@ import {
   Target,
   Sparkles,
   Loader2,
+  Lightbulb,
 } from 'lucide-react';
 
 interface ProjectJournalProps {
@@ -97,8 +98,11 @@ export const ProjectJournal: React.FC<ProjectJournalProps> = ({ board, onChangeF
               <SpeechButton onTranscript={(txt) => onChangeField('journalGood', board.journalGood ? board.journalGood + ' ' + txt : txt)} />
             </div>
             {impulses?.goodImpulse && (
-              <div className="text-[11px] text-emerald-800 bg-emerald-50/80 p-2 rounded-lg mb-2 border border-emerald-200/60 italic">
-                💡 Tipp: {impulses.goodImpulse}
+              <div className="text-[11px] text-emerald-800 bg-emerald-50/80 p-2 rounded-lg mb-2 border border-emerald-200/60 italic flex items-start gap-1.5">
+                <Lightbulb className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5 not-italic" />
+                <div>
+                  <strong className="font-semibold not-italic">Impuls:</strong> {impulses.goodImpulse}
+                </div>
               </div>
             )}
             <textarea
@@ -119,8 +123,11 @@ export const ProjectJournal: React.FC<ProjectJournalProps> = ({ board, onChangeF
               <SpeechButton onTranscript={(txt) => onChangeField('journalBad', board.journalBad ? board.journalBad + ' ' + txt : txt)} />
             </div>
             {impulses?.challengeImpulse && (
-              <div className="text-[11px] text-amber-800 bg-amber-50/80 p-2 rounded-lg mb-2 border border-amber-200/60 italic">
-                💡 Tipp: {impulses.challengeImpulse}
+              <div className="text-[11px] text-amber-800 bg-amber-50/80 p-2 rounded-lg mb-2 border border-amber-200/60 italic flex items-start gap-1.5">
+                <Lightbulb className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5 not-italic" />
+                <div>
+                  <strong className="font-semibold not-italic">Impuls:</strong> {impulses.challengeImpulse}
+                </div>
               </div>
             )}
             <textarea
@@ -141,8 +148,11 @@ export const ProjectJournal: React.FC<ProjectJournalProps> = ({ board, onChangeF
               <SpeechButton onTranscript={(txt) => onChangeField('journalNext', board.journalNext ? board.journalNext + ' ' + txt : txt)} />
             </div>
             {impulses?.nextGoalImpulse && (
-              <div className="text-[11px] text-sky-900 bg-sky-50/80 p-2 rounded-lg mb-2 border border-sky-200/60 italic">
-                💡 Tipp: {impulses.nextGoalImpulse}
+              <div className="text-[11px] text-sky-900 bg-sky-50/80 p-2 rounded-lg mb-2 border border-sky-200/60 italic flex items-start gap-1.5">
+                <Lightbulb className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5 not-italic" />
+                <div>
+                  <strong className="font-semibold not-italic">Impuls:</strong> {impulses.nextGoalImpulse}
+                </div>
               </div>
             )}
             <textarea

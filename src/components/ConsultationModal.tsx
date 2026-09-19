@@ -160,7 +160,10 @@ export const ConsultationModal: React.FC<ConsultationModalProps> = ({
                               : 'bg-white text-gray-600 border-gray-300'
                           }`}
                         >
-                          {m} {selectedAttendees.includes(m) ? '✓' : ''}
+                          <span className="inline-flex items-center gap-1">
+                            <span>{m}</span>
+                            {selectedAttendees.includes(m) && <Check className="w-3 h-3 stroke-[3]" />}
+                          </span>
                         </button>
                       ))
                     ) : (

@@ -32,6 +32,8 @@ import {
   Plus,
   Edit3,
   Trash2,
+  Building2,
+  ClipboardList,
 } from 'lucide-react';
 
 interface TeacherDashboardProps {
@@ -46,11 +48,11 @@ interface TeacherDashboardProps {
 }
 
 const FEEDBACK_SNIPPETS = [
-  'Toller Fortschritt, weiter so! 👍',
-  'Achtet besonders auf verlässliche Quellenangaben. 🔍',
-  'Kommt bitte kurz mit euren Notizen an den Lehrertisch. 👥',
-  'Gute Aufgabenverteilung im Team sichtbar! 🤝',
-  'Vergesst nicht die Zeit für die Generalprobe einzuplanen! ⏱️',
+  'Toller Fortschritt, weiter so!',
+  'Achtet besonders auf verlässliche Quellenangaben.',
+  'Kommt bitte kurz mit euren Notizen an den Lehrertisch.',
+  'Gute Aufgabenverteilung im Team sichtbar!',
+  'Vergesst nicht die Zeit für die Generalprobe einzuplanen.',
 ];
 
 export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
@@ -272,7 +274,8 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                 : 'text-gray-600 hover:bg-white/60 border-transparent'
             }`}
           >
-            <span>🎓 10er Abschluss</span>
+            <GraduationCap className="w-4 h-4 shrink-0 text-[#0B7BA7]" />
+            <span>10er Abschluss</span>
             <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-sky-100 text-[#0B7BA7]">
               {boards.filter((b) => b.projectType === 'grad10' && (b.teacherId === currentTeacherId || (b.teacherName || '').toLowerCase().includes(currentTeacherName))).length}
             </span>
@@ -286,7 +289,8 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                 : 'text-gray-600 hover:bg-white/60 border-transparent'
             }`}
           >
-            <span>📚 Meine Projekte</span>
+            <BookOpen className="w-4 h-4 shrink-0 text-[#0B7BA7]" />
+            <span>Meine Projekte</span>
             <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-200 text-gray-700">
               {boards.filter((b) => b.projectType !== 'grad10' && (b.teacherId === currentTeacherId || (b.teacherName || '').toLowerCase().includes(currentTeacherName))).length}
             </span>
@@ -300,7 +304,8 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                 : 'text-gray-600 hover:bg-white/60 border-transparent'
             }`}
           >
-            <span>📋 Vorlagen</span>
+            <Layers className="w-4 h-4 shrink-0 text-[#F39200]" />
+            <span>Vorlagen</span>
             <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-900 font-bold">
               {templates.length}
             </span>
@@ -314,7 +319,8 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                 : 'text-gray-600 hover:bg-white/60 border-transparent'
             }`}
           >
-            <span>🏫 Alle ({boards.length})</span>
+            <Building2 className="w-4 h-4 shrink-0 text-slate-600" />
+            <span>Alle ({boards.length})</span>
           </button>
         </div>
 
@@ -360,7 +366,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
 
         {/* Content Area */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-5">
-          {/* 🚨 Blocker Live-Radar */}
+          {/* Blocker Live-Radar */}
           {activeTab !== 'templates' && blockedBoards.length > 0 && (
             <div className="bg-red-50 border-2 border-red-300 rounded-2xl p-4 shadow-sm shrink-0">
               <div className="flex items-center gap-2 text-red-800 font-black text-xs sm:text-sm mb-2 uppercase tracking-wider">
@@ -559,13 +565,23 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                       <div className="flex justify-between items-start gap-2 mb-2">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span
-                            className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md border ${
+                            className={`inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md border ${
                               isGrad10
                                 ? 'bg-amber-100 text-amber-900 border-amber-300'
                                 : 'bg-sky-50 text-[#0B7BA7] border-sky-200'
                             }`}
                           >
-                            {isGrad10 ? '🎓 10er Abschlussarbeit' : `📚 ${b.studentClass || 'Fachprojekt'}`}
+                            {isGrad10 ? (
+                              <>
+                                <GraduationCap className="w-3 h-3 text-[#F39200]" />
+                                <span>10er Abschlussarbeit</span>
+                              </>
+                            ) : (
+                              <>
+                                <BookOpen className="w-3 h-3 text-[#0B7BA7]" />
+                                <span>{b.studentClass || 'Fachprojekt'}</span>
+                              </>
+                            )}
                           </span>
                           <span className="text-[10px] font-bold text-gray-400">
                             Code: {b.boardCode}
@@ -624,9 +640,15 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                           />
                         </div>
                         <div className="flex justify-between text-[10px] text-gray-500 mt-1 font-medium">
-                          <span className="text-emerald-700 font-bold">✅ {done}</span>
-                          <span className="text-[#0B7BA7] font-bold">⏳ {inProg}</span>
-                          <span className="text-[#F39200] font-bold">📋 {todo}</span>
+                          <span className="text-emerald-700 font-bold inline-flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-600" /> {done}
+                          </span>
+                          <span className="text-[#0B7BA7] font-bold inline-flex items-center gap-1">
+                            <Clock className="w-3 h-3 text-[#0B7BA7]" /> {inProg}
+                          </span>
+                          <span className="text-[#F39200] font-bold inline-flex items-center gap-1">
+                            <ClipboardList className="w-3 h-3 text-[#F39200]" /> {todo}
+                          </span>
                         </div>
                       </div>
 
@@ -675,9 +697,10 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                             </button>
                             <button
                               onClick={() => setActiveFeedbackBoardId(null)}
-                              className="px-2 py-1 text-xs text-gray-400"
+                              className="px-2 py-1 text-xs text-gray-400 hover:text-gray-700"
+                              title="Abbrechen"
                             >
-                              ✕
+                              <X className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         </div>

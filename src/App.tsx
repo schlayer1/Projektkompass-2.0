@@ -19,7 +19,7 @@ import { PresentationCoachModal } from './components/PresentationCoachModal';
 import { PrintableProjectReport } from './components/PrintableProjectReport';
 import { GuideModal } from './components/GuideModal';
 import { WelcomePortalModal } from './components/WelcomePortalModal';
-import { Compass, Sparkles, X } from 'lucide-react';
+import { Compass, Sparkles, X, Rocket, GraduationCap } from 'lucide-react';
 import {
   saveBoardToFirestore,
   fetchBoardByCode,
@@ -525,9 +525,9 @@ export function App() {
           boardCode: prev.boardCode || generateBoardCode(),
           updatedAt: new Date().toISOString(),
         }));
-        alert('✅ Projekt erfolgreich geladen!');
+        alert('Projekt erfolgreich geladen!');
       } else {
-        alert('❌ Falsches Dateiformat. Bitte wähle eine gültige kompass-*.json Datei.');
+        alert('Falsches Dateiformat. Bitte wähle eine gültige kompass-*.json Datei.');
       }
     };
     reader.readAsText(file);
@@ -546,7 +546,7 @@ export function App() {
       }));
       markLegacyDataMigrated();
       setIsLegacyModalOpen(false);
-      alert('🎉 Bisheriges Projekt erfolgreich in die neue Version übernommen!');
+      alert('Bisheriges Projekt erfolgreich in die neue Version übernommen!');
     }
   };
 
@@ -718,15 +718,17 @@ export function App() {
             <div className="flex items-center gap-2 shrink-0 ml-auto sm:ml-0">
               <button
                 onClick={() => handleOpenGuide('student')}
-                className="px-3.5 py-1.5 bg-[#0B7BA7] hover:bg-[#00558F] text-white text-xs font-bold rounded-xl shadow-xs transition-transform active:scale-95"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#0B7BA7] hover:bg-[#00558F] text-white text-xs font-bold rounded-xl shadow-xs transition-transform active:scale-95"
               >
-                🚀 Tour starten
+                <Rocket className="w-3.5 h-3.5" />
+                <span>Tour starten</span>
               </button>
               <button
                 onClick={() => handleOpenGuide('teacher')}
-                className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-xs font-bold rounded-xl transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-xs font-bold rounded-xl transition-colors"
               >
-                🎓 Für Lehrer
+                <GraduationCap className="w-3.5 h-3.5 text-[#F39200]" />
+                <span>Für Lehrkräfte</span>
               </button>
               <button
                 onClick={handleDismissWelcomeBanner}

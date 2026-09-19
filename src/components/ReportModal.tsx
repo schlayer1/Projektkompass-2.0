@@ -13,10 +13,10 @@ export const ReportModal: React.FC<ReportModalProps> = ({ isOpen, board, onClose
 
   if (!isOpen) return null;
 
-  // Trend Text-Chart erzeugen (analog zum Original)
+  // Trend Text-Chart erzeugen
   const getTrendTextChart = () => {
     if (!board.history || board.history.length === 0) return 'Keine Trend-Daten vorhanden.';
-    let chart = '📈 PROJEKT-TREND (Fortschritt der letzten Tage):\n';
+    let chart = 'PROJEKT-TREND (Fortschritt der letzten Tage):\n';
     chart += '---------------------------------------------------\n';
 
     board.history.forEach((h) => {
@@ -27,7 +27,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({ isOpen, board, onClose
       const barStr = '█'.repeat(barsDone) + '░'.repeat(10 - barsDone);
       const dSplit = h.date.split('-');
       const dStr = dSplit.length === 3 ? `${dSplit[2]}.${dSplit[1]}.` : h.date;
-      chart += `${dStr} | ${barStr} ${percentDone.toString().padStart(3, ' ')}% | ✅ ${h.done}  ⏳ ${h.inProgress}  📋 ${h.todo}\n`;
+      chart += `${dStr} | ${barStr} ${percentDone.toString().padStart(3, ' ')}% | Erledigt: ${h.done} | In Arbeit: ${h.inProgress} | Offen: ${h.todo}\n`;
     });
     return chart;
   };
@@ -47,33 +47,33 @@ export const ReportModal: React.FC<ReportModalProps> = ({ isOpen, board, onClose
     report += `Wir hoffen, diese Übersicht gibt einen guten Einblick in unseren Arbeitsstand!\n\n`;
 
     report += `==========================================\n`;
-    report += `🚀 STATUSBERICHT: ${pName}\n`;
-    report += `👤 Gruppe/Von: ${sName}\n`;
-    report += `📅 Stand: ${dateStr}\n`;
+    report += `STATUSBERICHT: ${pName}\n`;
+    report += `Gruppe / Autor: ${sName}\n`;
+    report += `Stand: ${dateStr}\n`;
     report += `==========================================\n\n`;
 
     const needsHelp = board.tasks.filter((t) => t.needsHelp && t.status !== 'done');
     if (needsHelp.length > 0) {
-      report += `🚨 HILFE BENÖTIGT BEI:\n${needsHelp
+      report += `[HILFE BENÖTIGT / BLOCKER]:\n${needsHelp
         .map((t) => `  - ${t.title}${t.blockerReason ? ` (Problem: ${t.blockerReason})` : ''}`)
         .join('\n')}\n\n`;
     }
 
-    report += `⏳ IN ARBEIT:\n${
+    report += `[IN ARBEIT]:\n${
       board.tasks
         .filter((t) => t.status === 'in_progress')
         .map((t) => `  - ${t.title}`)
         .join('\n') || '  - (keine)'
     }\n\n`;
 
-    report += `✅ ERLEDIGT:\n${
+    report += `[ERLEDIGT]:\n${
       board.tasks
         .filter((t) => t.status === 'done')
         .map((t) => `  - ${t.title}`)
         .join('\n') || '  - (keine)'
     }\n\n`;
 
-    report += `📋 NOCH ZU TUN:\n${
+    report += `[NOCH ZU TUN]:\n${
       board.tasks
         .filter((t) => t.status === 'todo')
         .map((t) => `  - ${t.title}`)
@@ -84,10 +84,10 @@ export const ReportModal: React.FC<ReportModalProps> = ({ isOpen, board, onClose
     const jB = (board.journalBad || '').trim();
     const jN = (board.journalNext || '').trim();
     if (jG || jB || jN) {
-      report += `📖 PROJEKT-TAGEBUCH:\n------------------------------------------\n`;
-      if (jG) report += `👍 Lief gut: ${jG}\n`;
-      if (jB) report += `🚧 War schwierig: ${jB}\n`;
-      if (jN) report += `🎯 Nächstes Ziel: ${jN}\n`;
+      report += `PROJEKT-TAGEBUCH:\n------------------------------------------\n`;
+      if (jG) report += `• Gut gelaufen: ${jG}\n`;
+      if (jB) report += `• Herausforderungen: ${jB}\n`;
+      if (jN) report += `• Nächstes Ziel: ${jN}\n`;
       report += `\n`;
     }
 

@@ -173,8 +173,11 @@ Antworte STRENG als valides JSON:
 
               {/* Role play */}
               {data.rolePlayAdvice && (
-                <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 font-medium">
-                  💡 <strong>Empfehlung:</strong> {data.rolePlayAdvice}
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 font-medium flex items-start gap-2">
+                  <Lightbulb className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <div>
+                    <strong>Empfehlung:</strong> {data.rolePlayAdvice}
+                  </div>
                 </div>
               )}
             </div>

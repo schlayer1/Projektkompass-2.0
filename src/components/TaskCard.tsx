@@ -15,6 +15,13 @@ import {
   Sparkles,
   Plus,
   Award,
+  Search,
+  Scissors,
+  PenLine,
+  Palette,
+  Presentation,
+  Laptop,
+  RefreshCw,
 } from 'lucide-react';
 
 interface TaskCardProps {
@@ -30,15 +37,24 @@ interface TaskCardProps {
   onDragEnd: (e: React.DragEvent) => void;
 }
 
-const TAG_CONFIG: Record<TaskTag, { label: string; bg: string; text: string; border: string }> = {
-  recherche: { label: '🔍 Recherche', bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' },
-  material: { label: '✂️ Material', bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' },
-  text: { label: '✍️ Text', bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' },
-  layout: { label: '🎨 Layout', bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-200' },
-  praesentation: { label: '🗣️ Präsentation', bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200' },
-  medien: { label: '💻 Technik', bg: 'bg-slate-100', text: 'text-slate-700', border: 'border-slate-200' },
-  kontrolle: { label: '🔄 Kontrolle', bg: 'bg-yellow-50', text: 'text-yellow-800', border: 'border-yellow-200' },
-  none: { label: '', bg: '', text: '', border: '' },
+const TAG_CONFIG: Record<
+  TaskTag,
+  {
+    label: string;
+    icon: React.ComponentType<{ className?: string }> | null;
+    bg: string;
+    text: string;
+    border: string;
+  }
+> = {
+  recherche: { label: 'Recherche', icon: Search, bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' },
+  material: { label: 'Material', icon: Scissors, bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' },
+  text: { label: 'Text', icon: PenLine, bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' },
+  layout: { label: 'Layout', icon: Palette, bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-200' },
+  praesentation: { label: 'Präsentation', icon: Presentation, bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200' },
+  medien: { label: 'Technik', icon: Laptop, bg: 'bg-slate-100', text: 'text-slate-700', border: 'border-slate-200' },
+  kontrolle: { label: 'Kontrolle', icon: RefreshCw, bg: 'bg-yellow-50', text: 'text-yellow-800', border: 'border-yellow-200' },
+  none: { label: '', icon: null, bg: '', text: '', border: '' },
 };
 
 const PRIORITY_BADGES: Record<TaskPriority, { label: string; color: string }> = {
@@ -173,9 +189,10 @@ export const TaskCard: React.FC<TaskCardProps> = ({
       <div className="flex flex-wrap gap-1.5 items-center mb-2">
         {tagInfo.label && (
           <span
-            className={`text-[10px] uppercase font-extrabold px-1.5 py-0.5 rounded border tracking-wider ${tagInfo.bg} ${tagInfo.text} ${tagInfo.border}`}
+            className={`inline-flex items-center gap-1 text-[10px] uppercase font-extrabold px-1.5 py-0.5 rounded border tracking-wider ${tagInfo.bg} ${tagInfo.text} ${tagInfo.border}`}
           >
-            {tagInfo.label}
+            {tagInfo.icon && <tagInfo.icon className="w-2.5 h-2.5 shrink-0" />}
+            <span>{tagInfo.label}</span>
           </span>
         )}
         {task.assignee && (

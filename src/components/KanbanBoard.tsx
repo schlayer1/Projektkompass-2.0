@@ -129,13 +129,13 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
               className="flex-1 sm:flex-initial text-xs bg-white border border-gray-300 rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-[#0B7BA7] text-gray-700 min-w-0"
             >
               <option value="all">Alle Kategorien</option>
-              <option value="recherche">🔍 Recherche</option>
-              <option value="material">✂️ Material</option>
-              <option value="text">✍️ Text</option>
-              <option value="layout">🎨 Layout</option>
-              <option value="praesentation">🗣️ Präsentation</option>
-              <option value="medien">💻 Technik</option>
-              <option value="kontrolle">🔄 Kontrolle</option>
+              <option value="recherche">Recherche</option>
+              <option value="material">Material</option>
+              <option value="text">Text</option>
+              <option value="layout">Layout</option>
+              <option value="praesentation">Präsentation</option>
+              <option value="medien">Technik & Medien</option>
+              <option value="kontrolle">Kontrolle</option>
             </select>
 
             {/* Priority Filter */}
@@ -145,9 +145,9 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
               className="flex-1 sm:flex-initial text-xs bg-white border border-gray-300 rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-[#0B7BA7] text-gray-700 min-w-0"
             >
               <option value="all">Alle Prioritäten</option>
-              <option value="urgent">🔴 Dringend</option>
-              <option value="important">🟡 Wichtig</option>
-              <option value="normal">🟢 Normal</option>
+              <option value="urgent">Dringend (hoch)</option>
+              <option value="important">Wichtig (mittel)</option>
+              <option value="normal">Normal</option>
             </select>
           </div>
         </div>

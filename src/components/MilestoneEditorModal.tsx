@@ -13,6 +13,8 @@ import {
   RotateCcw,
   Check,
   AlignLeft,
+  GraduationCap,
+  BookOpen,
 } from 'lucide-react';
 
 interface MilestoneEditorModalProps {
@@ -105,15 +107,17 @@ export const MilestoneEditorModal: React.FC<MilestoneEditorModalProps> = ({
           <div className="flex gap-2">
             <button
               onClick={handleLoadGrade10Preset}
-              className="text-xs bg-white hover:bg-sky-100 text-[#0B7BA7] border border-sky-300 font-bold px-3 py-1 rounded-lg transition-colors shadow-sm"
+              className="inline-flex items-center gap-1.5 text-xs bg-white hover:bg-sky-100 text-[#0B7BA7] border border-sky-300 font-bold px-3 py-1 rounded-lg transition-colors shadow-sm"
             >
-              🎓 Jg. 10 Jahresplan
+              <GraduationCap className="w-3.5 h-3.5 text-[#F39200]" />
+              <span>Jg. 10 Jahresplan</span>
             </button>
             <button
               onClick={handleLoadRegularPreset}
-              className="text-xs bg-white hover:bg-slate-100 text-gray-700 border border-slate-300 font-bold px-3 py-1 rounded-lg transition-colors shadow-sm"
+              className="inline-flex items-center gap-1.5 text-xs bg-white hover:bg-slate-100 text-gray-700 border border-slate-300 font-bold px-3 py-1 rounded-lg transition-colors shadow-sm"
             >
-              📚 Fachunterricht (3 Phasen)
+              <BookOpen className="w-3.5 h-3.5 text-[#0B7BA7]" />
+              <span>Fachunterricht (3 Phasen)</span>
             </button>
           </div>
         </div>

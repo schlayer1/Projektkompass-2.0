@@ -174,13 +174,13 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                 className="w-full p-2 border border-gray-300 rounded-xl focus:outline-none focus:border-[#0B7BA7] text-xs sm:text-sm bg-white"
               >
                 <option value="none">Keine Kategorie</option>
-                <option value="recherche">🔍 Recherche</option>
-                <option value="material">✂️ Material</option>
-                <option value="text">✍️ Text</option>
-                <option value="layout">🎨 Layout</option>
-                <option value="praesentation">🗣️ Präsentation</option>
-                <option value="medien">💻 Technik & Medien</option>
-                <option value="kontrolle">🔄 Kontrolle</option>
+                <option value="recherche">Recherche</option>
+                <option value="material">Material</option>
+                <option value="text">Text</option>
+                <option value="layout">Layout</option>
+                <option value="praesentation">Präsentation</option>
+                <option value="medien">Technik & Medien</option>
+                <option value="kontrolle">Kontrolle</option>
               </select>
             </div>
 
@@ -193,9 +193,9 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                 onChange={(e) => setPriority(e.target.value as TaskPriority)}
                 className="w-full p-2 border border-gray-300 rounded-xl focus:outline-none focus:border-[#0B7BA7] text-xs sm:text-sm bg-white"
               >
-                <option value="normal">🟢 Normal</option>
-                <option value="important">🟡 Wichtig</option>
-                <option value="urgent">🔴 Dringend</option>
+                <option value="normal">Normal</option>
+                <option value="important">Wichtig (mittel)</option>
+                <option value="urgent">Dringend (hoch)</option>
               </select>
             </div>
           </div>

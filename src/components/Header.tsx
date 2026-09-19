@@ -155,8 +155,8 @@ export const Header: React.FC<HeaderProps> = ({
                 onChange={(e) => onUpdateMeta('projectType', e.target.value as ProjectType)}
                 className="hidden sm:inline-block text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wide px-2 py-0.5 bg-sky-50 text-[#0B7BA7] rounded-lg border border-sky-300 focus:outline-none cursor-pointer shrink-0"
               >
-                <option value="grad10">🎓 Jg. 10 Abschlussarbeit</option>
-                <option value="regular">📚 Fachunterricht</option>
+                <option value="grad10">Jg. 10 Abschlussarbeit</option>
+                <option value="regular">Fachunterricht</option>
               </select>
             </div>
             <p className="text-[10px] sm:text-[11px] font-semibold text-[#F39200] m-0 truncate hidden sm:block">
@@ -314,8 +314,8 @@ export const Header: React.FC<HeaderProps> = ({
               onChange={(e) => onUpdateMeta('projectType', e.target.value as ProjectType)}
               className="text-[11px] font-extrabold uppercase tracking-wide px-2 py-1 bg-white text-[#0B7BA7] rounded-lg border border-sky-300 focus:outline-none cursor-pointer flex-1 truncate"
             >
-              <option value="grad10">🎓 Jg. 10 Abschluss</option>
-              <option value="regular">📚 Fachunterricht</option>
+              <option value="grad10">Jg. 10 Abschluss</option>
+              <option value="regular">Fachunterricht</option>
             </select>
           </div>
 

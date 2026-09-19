@@ -1,5 +1,6 @@
 import React from 'react';
 import { ProjectBoard } from '../types/project';
+import { CheckCircle2, Clock, BookOpen } from 'lucide-react';
 
 interface PrintableProjectReportProps {
   board: ProjectBoard;
@@ -108,7 +109,9 @@ export const PrintableProjectReport: React.FC<PrintableProjectReportProps> = ({ 
                   </td>
                   <td className="p-2">
                     {m.completed ? (
-                      <span className="text-emerald-700 font-bold">✅ Eingehalten</span>
+                      <span className="text-emerald-700 font-bold inline-flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Eingehalten
+                      </span>
                     ) : (
                       <span className="text-gray-500">Offen</span>
                     )}
@@ -160,7 +163,9 @@ export const PrintableProjectReport: React.FC<PrintableProjectReportProps> = ({ 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
           {/* Erledigt */}
           <div className="border p-3 rounded-lg bg-slate-50/50">
-            <h4 className="font-bold text-emerald-800 mb-2">✅ Erledigte Aufgaben ({doneTasks.length})</h4>
+            <h4 className="font-bold text-emerald-800 mb-2 inline-flex items-center gap-1.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Erledigte Aufgaben ({doneTasks.length})
+            </h4>
             <ul className="space-y-1.5 pl-1">
               {doneTasks.map((t) => (
                 <li key={t.id} className="border-l-2 border-emerald-500 pl-1.5">
@@ -173,7 +178,9 @@ export const PrintableProjectReport: React.FC<PrintableProjectReportProps> = ({ 
 
           {/* In Arbeit & Offen */}
           <div className="border p-3 rounded-lg bg-slate-50/50">
-            <h4 className="font-bold text-[#0B7BA7] mb-2">⏳ In Arbeit & Offen ({inProgTasks.length + todoTasks.length})</h4>
+            <h4 className="font-bold text-[#0B7BA7] mb-2 inline-flex items-center gap-1.5">
+              <Clock className="w-4 h-4 text-[#0B7BA7]" /> In Arbeit & Offen ({inProgTasks.length + todoTasks.length})
+            </h4>
             <ul className="space-y-1.5 pl-1">
               {[...inProgTasks, ...todoTasks].map((t) => (
                 <li key={t.id} className="border-l-2 border-[#0B7BA7] pl-1.5">
@@ -189,8 +196,8 @@ export const PrintableProjectReport: React.FC<PrintableProjectReportProps> = ({ 
       {/* Reflexionstagebuch */}
       {(board.journalGood || board.journalBad || board.journalNext) && (
         <div className="mb-6 bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs">
-          <h3 className="font-extrabold text-sm uppercase tracking-wider text-gray-800 border-b pb-1 mb-2">
-            📖 Reflexion & Metakognition der Gruppe
+          <h3 className="font-extrabold text-sm uppercase tracking-wider text-gray-800 border-b pb-1 mb-2 inline-flex items-center gap-1.5">
+            <BookOpen className="w-4 h-4 text-[#0B7BA7]" /> Reflexion & Metakognition der Gruppe
           </h3>
           <div className="space-y-1.5">
             {board.journalGood && (

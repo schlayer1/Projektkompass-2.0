@@ -9,6 +9,7 @@ import {
   Settings2,
   Milestone as MilestoneIcon,
   Sparkles,
+  Check,
 } from 'lucide-react';
 
 interface MilestoneTimelineProps {
@@ -92,7 +93,7 @@ export const MilestoneTimeline: React.FC<MilestoneTimelineProps> = ({
                         : 'bg-slate-200 text-gray-700'
                     }`}
                   >
-                    {isCompleted ? '✓' : idx + 1}
+                    {isCompleted ? <Check className="w-3 h-3 stroke-[3]" /> : idx + 1}
                   </span>
 
                   {m.dueDate && (
