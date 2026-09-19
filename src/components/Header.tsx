@@ -6,6 +6,7 @@ import { getAllTeachers } from '../data/teachers';
 import { SCHOOL_CLASSES } from '../data/schoolClasses';
 import { ClassroomTimer } from './ClassroomTimer';
 import { SystemStatusBadge } from './SystemStatusBadge';
+import { StudentLogoutModal } from './StudentLogoutModal';
 import {
   Upload,
   Download,
@@ -35,6 +36,7 @@ interface HeaderProps {
   onOpenMembersModal: () => void;
   onOpenGuide: (role?: 'student' | 'teacher') => void;
   onOpenWelcomePortal: () => void;
+  onStudentLogout?: () => void;
   isOnline: boolean;
   offlineQueueCount: number;
 }
@@ -51,12 +53,14 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenMembersModal,
   onOpenGuide,
   onOpenWelcomePortal,
+  onStudentLogout,
   isOnline,
   offlineQueueCount,
 }) => {
   const { role, currentTeacher, logout } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [copiedCode, setCopiedCode] = React.useState(false);
+  const [isStudentLogoutModalOpen, setIsStudentLogoutModalOpen] = React.useState(false);
   const [isCollapsed, setIsCollapsed] = React.useState(() => {
     try {
       return localStorage.getItem('pk_header_collapsed') === 'true';
@@ -98,6 +102,16 @@ export const Header: React.FC<HeaderProps> = ({
   const handleLogout = () => {
     logout();
     onOpenWelcomePortal();
+  };
+
+  const handleConfirmStudentLogout = () => {
+    setIsStudentLogoutModalOpen(false);
+    if (onStudentLogout) {
+      onStudentLogout();
+    } else {
+      logout();
+      onOpenWelcomePortal();
+    }
   };
 
   return (
@@ -185,6 +199,16 @@ export const Header: React.FC<HeaderProps> = ({
                       Dashboard
                     </button>
                   </div>
+                )}
+                {role === 'student' && (
+                  <button
+                    onClick={() => setIsStudentLogoutModalOpen(true)}
+                    className="hidden sm:inline-flex items-center gap-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-1.5 py-0.5 rounded-md text-[10px] font-bold transition-colors shrink-0 cursor-pointer"
+                    title="Gruppe sicher abmelden"
+                  >
+                    <LogOut className="w-2.5 h-2.5 text-rose-600" />
+                    <span>Abmelden</span>
+                  </button>
                 )}
               </motion.div>
             ) : (
@@ -335,16 +359,27 @@ export const Header: React.FC<HeaderProps> = ({
                   <span className="hidden xl:inline">Guide</span>
                 </button>
 
-                {/* Switch Project */}
-                {(role !== 'teacher' || !currentTeacher) && (
+                {/* Student Logout or Switch Project */}
+                {role === 'student' ? (
                   <button
-                    onClick={onOpenWelcomePortal}
-                    className="hidden sm:flex items-center gap-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg text-xs font-bold transition-all shadow-2xs active:scale-95 shrink-0"
-                    title="Startmenü öffnen / Projekt wechseln"
+                    onClick={() => setIsStudentLogoutModalOpen(true)}
+                    className="flex items-center gap-1 sm:gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg text-xs font-bold transition-all shadow-2xs active:scale-95 shrink-0 cursor-pointer"
+                    title="Schülergruppe sicher abmelden"
                   >
-                    <LogOut className="w-3.5 h-3.5 text-slate-500" />
-                    <span className="hidden 2xl:inline">Projekt wechseln</span>
+                    <LogOut className="w-3.5 h-3.5 text-rose-600" />
+                    <span>Abmelden</span>
                   </button>
+                ) : (
+                  !currentTeacher && (
+                    <button
+                      onClick={onOpenWelcomePortal}
+                      className="hidden sm:flex items-center gap-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg text-xs font-bold transition-all shadow-2xs active:scale-95 shrink-0"
+                      title="Startmenü öffnen / Projekt wechseln"
+                    >
+                      <LogOut className="w-3.5 h-3.5 text-slate-500" />
+                      <span className="hidden 2xl:inline">Projekt wechseln</span>
+                    </button>
+                  )
                 )}
 
                 {role === 'teacher' && currentTeacher && (
@@ -358,14 +393,16 @@ export const Header: React.FC<HeaderProps> = ({
                   </button>
                 )}
 
-                {/* Settings Button */}
-                <button
-                  onClick={onOpenSettings}
-                  className="p-1 sm:p-1.5 rounded-lg text-gray-500 hover:text-gray-800 hover:bg-gray-100 border border-gray-200 transition-colors shrink-0"
-                  title="Einstellungen"
-                >
-                  <Settings className="w-3.5 h-3.5" />
-                </button>
+                {/* Settings Button (Only visible for teachers or unauthenticated; hidden for logged-in students) */}
+                {role !== 'student' && (
+                  <button
+                    onClick={onOpenSettings}
+                    className="p-1 sm:p-1.5 rounded-lg text-gray-500 hover:text-gray-800 hover:bg-gray-100 border border-gray-200 transition-colors shrink-0 cursor-pointer"
+                    title="Einstellungen"
+                  >
+                    <Settings className="w-3.5 h-3.5" />
+                  </button>
+                )}
 
                 {/* Collapse Button */}
                 <button
@@ -562,6 +599,16 @@ export const Header: React.FC<HeaderProps> = ({
                     <Share2 className="w-3 h-3" />
                     <span>Bericht</span>
                   </button>
+                  {role === 'student' && (
+                    <button
+                      onClick={() => setIsStudentLogoutModalOpen(true)}
+                      className="flex items-center gap-1 px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-[11px] font-bold shadow-2xs cursor-pointer"
+                      title="Gruppe abmelden"
+                    >
+                      <LogOut className="w-3 h-3 text-rose-600" />
+                      <span>Abmelden</span>
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -580,6 +627,15 @@ export const Header: React.FC<HeaderProps> = ({
           </motion.div>
         )}
       </AnimatePresence>
+
+      <StudentLogoutModal
+        isOpen={isStudentLogoutModalOpen}
+        board={board}
+        isOnline={isOnline}
+        offlineQueueCount={offlineQueueCount}
+        onClose={() => setIsStudentLogoutModalOpen(false)}
+        onConfirmLogout={handleConfirmStudentLogout}
+      />
     </header>
   );
 };

@@ -669,6 +669,12 @@ export function App() {
     });
   };
 
+  const handleStudentLogout = () => {
+    logout();
+    setBoard(INITIAL_BOARD);
+    setIsWelcomePortalOpen(true);
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc] text-gray-800 font-sans overflow-x-clip">
       {/* Header */}
@@ -690,6 +696,7 @@ export function App() {
         onOpenMembersModal={() => setIsGroupMembersModalOpen(true)}
         onOpenGuide={handleOpenGuide}
         onOpenWelcomePortal={() => setIsWelcomePortalOpen(true)}
+        onStudentLogout={handleStudentLogout}
         isOnline={isOnline}
         offlineQueueCount={offlineCount}
       />
