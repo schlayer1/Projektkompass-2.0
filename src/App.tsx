@@ -142,7 +142,7 @@ const INITIAL_BOARD: ProjectBoard = {
 };
 
 export function App() {
-  const { role } = useAuth();
+  const { role, currentTeacher, logout, loginAsStudent } = useAuth();
 
   const [board, setBoard] = useState<ProjectBoard>(() => {
     try {
@@ -255,6 +255,23 @@ export function App() {
       window.removeEventListener('pk-offline-queue-updated', handleQueueUpdate);
       window.removeEventListener('pk-offline-queue-synced', handleQueueUpdate);
     };
+  }, []);
+
+  // Hintergrund-Synchronisation bei App-Start
+  useEffect(() => {
+    if (board.boardCode && navigator.onLine) {
+      fetchBoardByCode(board.boardCode)
+        .then((cloudBoard) => {
+          if (cloudBoard) {
+            const cloudTime = new Date(cloudBoard.updatedAt || 0).getTime();
+            const localTime = new Date(board.updatedAt || 0).getTime();
+            if (cloudTime > localTime) {
+              setBoard(cloudBoard);
+            }
+          }
+        })
+        .catch((err) => console.warn('Background sync warning:', err));
+    }
   }, []);
 
   // Täglicher Trend-Chart Snapshot
@@ -540,6 +557,13 @@ export function App() {
       if (loaded) {
         setBoard(loaded);
         setIsWelcomePortalOpen(false);
+        if (role !== 'teacher') {
+          try {
+            await loginAsStudent(loaded.boardCode);
+          } catch (err) {
+            console.warn('Session speichern:', err);
+          }
+        }
         return { success: true };
       } else {
         return { success: false, message: `Kein Projekt mit dem Code „${code}“ gefunden.` };
@@ -592,6 +616,14 @@ export function App() {
 
     setBoard(newBoard);
     setIsWelcomePortalOpen(false);
+
+    if (role !== 'teacher') {
+      try {
+        await loginAsStudent(newCode);
+      } catch (err) {
+        console.warn('Session speichern:', err);
+      }
+    }
 
     try {
       await saveBoardToFirestore(newBoard);
@@ -864,7 +896,7 @@ export function App() {
       />
 
       {/* Printable Report in Background for PDF Generator */}
-      <div className="hidden print:block">
+      <div className="fixed left-[-9999px] top-0 pointer-events-none print:static print:left-0 print:pointer-events-auto">
         <PrintableProjectReport board={board} />
       </div>
     </div>
