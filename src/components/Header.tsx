@@ -111,9 +111,9 @@ export const Header: React.FC<HeaderProps> = ({
       />
 
       {/* Row 1: Top Bar (Always anchored, smoothly transitions elements) */}
-      <div className="px-2.5 sm:px-6 py-1.5 sm:py-2 flex items-center justify-between gap-1.5 sm:gap-4 border-b border-slate-100">
+      <div className="px-2.5 sm:px-6 py-1.5 sm:py-2 flex items-center justify-between gap-1.5 sm:gap-4 border-b border-slate-100 min-w-0">
         {/* Left Side: Brand & (Compact meta OR Project Type) */}
-        <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 flex-1 overflow-hidden">
           <button
             onClick={toggleCollapsed}
             className="flex items-center gap-1.5 text-left group cursor-pointer shrink-0"
@@ -148,14 +148,14 @@ export const Header: React.FC<HeaderProps> = ({
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -8 }}
                 transition={{ duration: 0.2 }}
-                className="flex items-center gap-1.5 min-w-0"
+                className="flex items-center gap-1.5 min-w-0 overflow-hidden flex-1"
               >
                 <span className="text-slate-300 hidden sm:inline">•</span>
-                <span className="text-xs font-bold text-gray-800 truncate max-w-[120px] sm:max-w-[240px] md:max-w-[360px]">
+                <span className="text-xs font-bold text-gray-800 truncate min-w-0 max-w-[90px] xs:max-w-[140px] sm:max-w-[220px] md:max-w-[320px]">
                   {board.projectName || 'Unbenanntes Projekt'}
                 </span>
                 {board.studentName && (
-                  <span className="text-[11px] text-gray-500 font-medium truncate max-w-[100px] hidden md:inline">
+                  <span className="text-[11px] text-gray-500 font-medium truncate max-w-[80px] hidden md:inline">
                     ({board.studentName})
                   </span>
                 )}
@@ -194,7 +194,7 @@ export const Header: React.FC<HeaderProps> = ({
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -8 }}
                 transition={{ duration: 0.2 }}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 shrink-0"
               >
                 <select
                   value={board.projectType || 'regular'}
@@ -221,7 +221,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Right Side: Timer & Status (Permanent) + (Action Buttons OR Expand Button) */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 ml-auto">
           <ClassroomTimer />
           <SystemStatusBadge
             isOnline={isOnline}
@@ -238,12 +238,12 @@ export const Header: React.FC<HeaderProps> = ({
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.2 }}
                 onClick={toggleCollapsed}
-                className="flex items-center gap-1 bg-[#0B7BA7] hover:bg-[#00558F] text-white px-2.5 sm:px-3 py-1 rounded-lg text-xs font-bold shadow-xs transition-transform active:scale-95 cursor-pointer shrink-0"
+                className="flex items-center gap-1 bg-[#0B7BA7] hover:bg-[#00558F] text-white px-2 sm:px-3 py-1 rounded-lg text-xs font-bold shadow-xs transition-transform active:scale-95 cursor-pointer shrink-0 border border-[#0B7BA7]"
                 title="Header vollständig ausklappen"
               >
                 <ChevronDown className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Header einblenden</span>
-                <span className="sm:hidden">Menü</span>
+                <span className="hidden sm:inline">Ausklappen</span>
+                <span className="sm:hidden">Öffnen</span>
               </motion.button>
             ) : (
               <motion.div
@@ -317,7 +317,7 @@ export const Header: React.FC<HeaderProps> = ({
                 ) : (
                   <button
                     onClick={onOpenTeacherDashboard}
-                    className="flex items-center gap-1 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg text-xs font-bold border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 transition-colors shrink-0"
+                    className="hidden sm:flex items-center gap-1 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg text-xs font-bold border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 transition-colors shrink-0"
                     title="Lehrer-Login mit PIN"
                   >
                     <GraduationCap className="w-3.5 h-3.5 text-[#F39200]" />
@@ -328,7 +328,7 @@ export const Header: React.FC<HeaderProps> = ({
                 {/* Guide Button */}
                 <button
                   onClick={() => onOpenGuide(role === 'teacher' ? 'teacher' : 'student')}
-                  className="flex items-center gap-1 bg-sky-50 hover:bg-sky-100 text-[#0B7BA7] border border-sky-200 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg text-xs font-bold transition-all shadow-2xs active:scale-95 shrink-0"
+                  className="hidden sm:flex items-center gap-1 bg-sky-50 hover:bg-sky-100 text-[#0B7BA7] border border-sky-200 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg text-xs font-bold transition-all shadow-2xs active:scale-95 shrink-0"
                   title="Handbuch & Onboarding öffnen"
                 >
                   <BookOpen className="w-3.5 h-3.5 text-[#0B7BA7]" />
@@ -339,7 +339,7 @@ export const Header: React.FC<HeaderProps> = ({
                 {(role !== 'teacher' || !currentTeacher) && (
                   <button
                     onClick={onOpenWelcomePortal}
-                    className="flex items-center gap-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg text-xs font-bold transition-all shadow-2xs active:scale-95 shrink-0"
+                    className="hidden sm:flex items-center gap-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg text-xs font-bold transition-all shadow-2xs active:scale-95 shrink-0"
                     title="Startmenü öffnen / Projekt wechseln"
                   >
                     <LogOut className="w-3.5 h-3.5 text-slate-500" />
@@ -370,11 +370,11 @@ export const Header: React.FC<HeaderProps> = ({
                 {/* Collapse Button */}
                 <button
                   onClick={toggleCollapsed}
-                  className="flex items-center gap-1 bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg text-xs font-bold transition-all shadow-2xs active:scale-95 shrink-0 border border-slate-200 cursor-pointer"
+                  className="flex items-center gap-1 bg-sky-50 hover:bg-sky-100 text-[#0B7BA7] border border-sky-200 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg text-xs font-bold transition-all shadow-2xs active:scale-95 shrink-0 cursor-pointer"
                   title="Header einklappen für maximale Arbeitsfläche"
                 >
-                  <ChevronUp className="w-3.5 h-3.5 text-slate-600" />
-                  <span className="hidden 2xl:inline">Einklappen</span>
+                  <ChevronUp className="w-3.5 h-3.5 text-[#0B7BA7]" />
+                  <span className="hidden sm:inline">Einklappen</span>
                 </button>
               </motion.div>
             )}
