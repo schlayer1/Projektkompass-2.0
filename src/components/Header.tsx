@@ -17,6 +17,7 @@ import {
   Users,
   LogOut,
   ChevronDown,
+  ChevronUp,
   BookOpen,
   ArrowLeft,
 } from 'lucide-react';
@@ -55,6 +56,23 @@ export const Header: React.FC<HeaderProps> = ({
   const { role, currentTeacher, logout } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [copiedCode, setCopiedCode] = React.useState(false);
+  const [isCollapsed, setIsCollapsed] = React.useState(() => {
+    try {
+      return localStorage.getItem('pk_header_collapsed') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleCollapsed = () => {
+    setIsCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('pk_header_collapsed', String(next));
+      } catch {}
+      return next;
+    });
+  };
 
   const teachers = getAllTeachers();
 
@@ -80,6 +98,106 @@ export const Header: React.FC<HeaderProps> = ({
     logout();
     onOpenWelcomePortal();
   };
+
+  if (isCollapsed) {
+    return (
+      <header className="bg-white/95 backdrop-blur-md shadow-md border-b-2 border-[#0B7BA7] sticky top-0 z-30 transition-all duration-200">
+        <input
+          type="file"
+          ref={fileInputRef}
+          accept=".json"
+          className="hidden"
+          onChange={onImportFile}
+        />
+        <div className="px-2.5 sm:px-6 py-1.5 flex items-center justify-between gap-2">
+          {/* Left: Brand + Project Info */}
+          <div className="flex items-center gap-2 min-w-0">
+            <button
+              onClick={toggleCollapsed}
+              className="flex items-center gap-1.5 text-left group cursor-pointer shrink-0"
+              title="Header ausklappen"
+            >
+              <img
+                src="/Siegel_bunt.png"
+                alt="Heimbürgeschule Kahla"
+                className="w-5 h-5 sm:w-6 sm:h-6 object-contain rounded-full border border-[#0B7BA7] bg-white shrink-0 group-hover:scale-105 transition-transform"
+                onError={(e) => {
+                  (e.target as HTMLElement).style.display = 'none';
+                }}
+              />
+              <span className="text-xs sm:text-sm font-black text-[#0B7BA7] tracking-tight group-hover:text-[#00558F] transition-colors shrink-0">
+                Projektkompass
+              </span>
+            </button>
+
+            <span className="text-slate-300 hidden sm:inline">•</span>
+
+            {/* Project Title & Meta Info */}
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="text-xs font-bold text-gray-800 truncate max-w-[120px] sm:max-w-[260px] md:max-w-[380px]">
+                {board.projectName || 'Unbenanntes Projekt'}
+              </span>
+              {board.studentName && (
+                <span className="text-[11px] text-gray-500 font-medium truncate max-w-[100px] hidden md:inline">
+                  ({board.studentName})
+                </span>
+              )}
+              {board.studentClass && (
+                <span className="text-[10px] font-bold px-1.5 py-0.5 bg-slate-100 text-slate-700 rounded border border-slate-200 shrink-0 hidden sm:inline">
+                  Kl. {board.studentClass}
+                </span>
+              )}
+              {board.boardCode && (
+                <button
+                  onClick={handleCopyCode}
+                  title="Code kopieren"
+                  className="text-[10px] font-bold px-1.5 py-0.5 bg-sky-50 text-[#0B7BA7] hover:bg-sky-100 rounded border border-sky-200 shrink-0 hidden lg:inline-flex items-center gap-1"
+                >
+                  <span>{board.boardCode}</span>
+                  {copiedCode ? <Check className="w-2.5 h-2.5 text-green-600" /> : <Copy className="w-2.5 h-2.5 opacity-60" />}
+                </button>
+              )}
+            </div>
+
+            {/* If Teacher: Mini Dashboard Button in collapsed bar */}
+            {role === 'teacher' && currentTeacher && (
+              <div className="hidden sm:flex items-center gap-1 bg-amber-50 border border-amber-200 rounded-md px-1.5 py-0.5 shrink-0">
+                <GraduationCap className="w-3 h-3 text-[#F39200] shrink-0" />
+                <button
+                  onClick={onOpenTeacherDashboard}
+                  className="text-[10px] font-extrabold text-amber-950 hover:text-amber-800 transition-colors"
+                  title="Zurück zum Lehrer-Dashboard"
+                >
+                  Dashboard
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Right: Timer, Cloud & AI Status, and Expand Button */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <ClassroomTimer />
+
+            <SystemStatusBadge
+              isOnline={isOnline}
+              offlineQueueCount={offlineQueueCount}
+              variant="header"
+            />
+
+            <button
+              onClick={toggleCollapsed}
+              className="flex items-center gap-1 bg-[#0B7BA7] hover:bg-[#00558F] text-white px-2.5 sm:px-3 py-1 rounded-lg text-xs font-bold shadow-xs transition-transform active:scale-95 cursor-pointer shrink-0"
+              title="Header vollständig ausklappen"
+            >
+              <ChevronDown className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Header einblenden</span>
+              <span className="sm:hidden">Menü</span>
+            </button>
+          </div>
+        </div>
+      </header>
+    );
+  }
 
   return (
     <header className="bg-white shadow-md border-b-4 border-[#0B7BA7] sticky top-0 z-30 transition-shadow">
@@ -164,12 +282,12 @@ export const Header: React.FC<HeaderProps> = ({
             </p>
           </div>
 
-          {/* Board Code Badge (Desktop lg+) */}
+          {/* Board Code Badge (Desktop 2xl+) */}
           {board.boardCode && (
             <button
               onClick={handleCopyCode}
               title="Projekt-Code kopieren"
-              className="hidden lg:flex items-center gap-1.5 bg-sky-50 hover:bg-sky-100 text-[#0B7BA7] border border-sky-200 text-xs font-bold px-2.5 py-1 rounded-lg transition-colors shrink-0"
+              className="hidden 2xl:flex items-center gap-1.5 bg-sky-50 hover:bg-sky-100 text-[#0B7BA7] border border-sky-200 text-xs font-bold px-2.5 py-1 rounded-lg transition-colors shrink-0"
             >
               <span>Code: {board.boardCode}</span>
               {copiedCode ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5 opacity-60" />}
@@ -197,7 +315,7 @@ export const Header: React.FC<HeaderProps> = ({
               title="Projekt laden (.json)"
             >
               <Upload className="w-3.5 h-3.5 text-[#0B7BA7]" />
-              <span className="hidden xl:inline">Laden</span>
+              <span className="hidden 2xl:inline">Laden</span>
             </button>
 
             <button
@@ -206,7 +324,7 @@ export const Header: React.FC<HeaderProps> = ({
               title="Projekt speichern (.json)"
             >
               <Download className="w-3.5 h-3.5 text-[#0B7BA7]" />
-              <span className="hidden xl:inline">Speichern</span>
+              <span className="hidden 2xl:inline">Speichern</span>
             </button>
 
             <button
@@ -256,7 +374,7 @@ export const Header: React.FC<HeaderProps> = ({
               title="Lehrer-Login mit PIN"
             >
               <GraduationCap className="w-3.5 h-3.5 text-[#F39200]" />
-              <span className="hidden lg:inline">Lehrkraft</span>
+              <span className="hidden xl:inline">Lehrkraft</span>
             </button>
           )}
 
@@ -267,7 +385,7 @@ export const Header: React.FC<HeaderProps> = ({
             title="Handbuch & Onboarding öffnen"
           >
             <BookOpen className="w-3.5 h-3.5 text-[#0B7BA7]" />
-            <span className="hidden lg:inline">Guide</span>
+            <span className="hidden xl:inline">Guide</span>
           </button>
 
           {/* Projekt wechseln / Startmenü (für Schüler immer, für Lehrer nur Desktop/Tablet als Fallback) */}
@@ -278,7 +396,7 @@ export const Header: React.FC<HeaderProps> = ({
               title="Startmenü öffnen / Projekt wechseln"
             >
               <LogOut className="w-3.5 h-3.5 text-slate-500" />
-              <span className="hidden xl:inline">Projekt wechseln</span>
+              <span className="hidden 2xl:inline">Projekt wechseln</span>
             </button>
           )}
 
@@ -289,7 +407,7 @@ export const Header: React.FC<HeaderProps> = ({
               title="Zurück zum Lehrer-Dashboard / Alle Projekte"
             >
               <ArrowLeft className="w-3.5 h-3.5 text-amber-600" />
-              <span className="hidden xl:inline">Zurück zur Übersicht</span>
+              <span className="hidden 2xl:inline">Zurück zur Übersicht</span>
             </button>
           )}
 
@@ -299,6 +417,15 @@ export const Header: React.FC<HeaderProps> = ({
             title="Einstellungen"
           >
             <Settings className="w-3.5 h-3.5" />
+          </button>
+
+          <button
+            onClick={toggleCollapsed}
+            className="flex items-center gap-1 bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg text-xs font-bold transition-all shadow-2xs active:scale-95 shrink-0 border border-slate-200 cursor-pointer"
+            title="Header einklappen für maximale Arbeitsfläche"
+          >
+            <ChevronUp className="w-3.5 h-3.5 text-slate-600" />
+            <span className="hidden 2xl:inline">Einklappen</span>
           </button>
         </div>
       </div>
@@ -448,6 +575,18 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Bottom Center Collapse Handle */}
+      <div className="flex justify-center -mb-2.5 relative z-10">
+        <button
+          onClick={toggleCollapsed}
+          className="flex items-center gap-1 bg-white hover:bg-sky-50 text-slate-500 hover:text-[#0B7BA7] text-[10px] font-bold px-3 py-0.5 rounded-full border border-slate-200 hover:border-sky-300 shadow-xs transition-colors cursor-pointer"
+          title="Header einklappen (maximale Arbeitsfläche)"
+        >
+          <ChevronUp className="w-3 h-3" />
+          <span>Header einklappen</span>
+        </button>
       </div>
     </header>
   );
