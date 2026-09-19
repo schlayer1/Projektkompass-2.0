@@ -190,7 +190,14 @@ export function App() {
   const [presentationCoachTask, setPresentationCoachTask] = useState<Task | null>(null);
   const [modalTargetBoard, setModalTargetBoard] = useState<ProjectBoard | null>(null);
   // Guide & Onboarding
-  const [isWelcomePortalOpen, setIsWelcomePortalOpen] = useState(true);
+  const [isWelcomePortalOpen, setIsWelcomePortalOpen] = useState(() => {
+    try {
+      const savedRole = localStorage.getItem('pk_auth_role_v2');
+      return !savedRole;
+    } catch {
+      return true;
+    }
+  });
   const [isGuideModalOpen, setIsGuideModalOpen] = useState(false);
   const [guideInitialRole, setGuideInitialRole] = useState<'student' | 'teacher'>('student');
   const [showWelcomeBanner, setShowWelcomeBanner] = useState(() => {

@@ -19,6 +19,7 @@ import {
   LogOut,
   ChevronDown,
   BookOpen,
+  ArrowLeft,
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -76,6 +77,11 @@ export const Header: React.FC<HeaderProps> = ({
     }
   };
 
+  const handleLogout = () => {
+    logout();
+    onOpenWelcomePortal();
+  };
+
   return (
     <header className="bg-white shadow-sm border-b-4 border-[#0B7BA7] sticky top-0 z-30">
       <input
@@ -85,6 +91,44 @@ export const Header: React.FC<HeaderProps> = ({
         className="hidden"
         onChange={onImportFile}
       />
+
+      {/* Lehrer-Modus Status- & Schnellzugriffsleiste (wenn als Lehrkraft eingeloggt) */}
+      {role === 'teacher' && currentTeacher && (
+        <div className="bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-amber-950 px-2.5 sm:px-6 py-1.5 flex items-center justify-between gap-2 border-b border-amber-600/40 shadow-xs">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="inline-flex items-center gap-1.5 bg-amber-950/15 text-amber-950 text-[11px] sm:text-xs font-black px-2 py-0.5 rounded-md shrink-0">
+              <GraduationCap className="w-3.5 h-3.5 text-amber-900" />
+              <span>Lehrer-Modus</span>
+            </span>
+            <span className="text-xs sm:text-sm font-bold text-amber-950 truncate">
+              {currentTeacher.displayName}
+            </span>
+            <span className="text-[11px] text-amber-900/80 font-medium truncate hidden md:inline">
+              — Du prüfst Projekt »{board.projectName || board.boardCode || 'Unbenannt'}« ({board.studentClass ? `Kl. ${board.studentClass}` : 'Klasse ?'}{board.studentName ? `, ${board.studentName}` : ''})
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <button
+              onClick={onOpenTeacherDashboard}
+              className="flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-white px-2.5 sm:px-3.5 py-1 rounded-lg text-xs font-bold shadow-xs transition-all active:scale-95 cursor-pointer"
+              title="Zurück zum Lehrer-Dashboard mit allen Projekten"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 text-amber-300" />
+              <span className="hidden sm:inline">Zurück zum Lehrerdashboard</span>
+              <span className="sm:hidden">Dashboard</span>
+            </button>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-1 bg-amber-950/15 hover:bg-amber-950/25 text-amber-950 px-2 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+              title="Abmelden"
+            >
+              <LogOut className="w-3 h-3 text-amber-900" />
+              <span className="hidden sm:inline">Abmelden</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Row 1: Brand, Mode, Timer & Global Actions */}
       <div className="px-2.5 sm:px-6 py-1.5 sm:py-2 flex items-center justify-between gap-1 sm:gap-4 border-b border-slate-100">
@@ -194,21 +238,24 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Teacher Cockpit / Login */}
           {role === 'teacher' && currentTeacher ? (
-            <div className="flex items-center gap-1 bg-amber-100/80 border border-amber-300 rounded-lg px-1.5 py-0.5 sm:px-2">
+            <div className="flex items-center gap-1 bg-amber-100/90 border border-amber-300 rounded-lg p-0.5 sm:px-1.5 shadow-2xs">
               <button
                 onClick={onOpenTeacherDashboard}
-                className="flex items-center gap-1 text-xs font-bold text-amber-900 hover:underline"
-                title="Lehrer-Cockpit öffnen"
+                className="flex items-center gap-1.5 text-xs font-bold text-amber-950 hover:bg-amber-200/70 px-2 py-1 rounded-md transition-colors"
+                title="Zurück zum Lehrer-Dashboard / Alle Projekte anzeigen"
               >
-                <GraduationCap className="w-3.5 h-3.5 text-[#F39200]" />
-                <span className="max-w-[80px] sm:max-w-[100px] truncate hidden sm:inline">{currentTeacher.displayName}</span>
+                <ArrowLeft className="w-3.5 h-3.5 text-amber-800 shrink-0" />
+                <GraduationCap className="w-3.5 h-3.5 text-[#F39200] shrink-0" />
+                <span className="font-extrabold hidden sm:inline">Dashboard</span>
+                <span className="sm:hidden text-[11px] font-extrabold">Übersicht</span>
               </button>
+              <div className="h-4 w-px bg-amber-300" />
               <button
-                onClick={logout}
-                className="p-1 text-amber-800 hover:text-red-600 rounded ml-0.5"
+                onClick={handleLogout}
+                className="p-1 text-amber-800 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
                 title="Abmelden"
               >
-                <LogOut className="w-3 h-3" />
+                <LogOut className="w-3.5 h-3.5" />
               </button>
             </div>
           ) : (
@@ -232,14 +279,23 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="hidden sm:inline">Guide</span>
           </button>
 
-          {/* Projekt wechseln / Startmenü Button */}
+          {/* Projekt wechseln / Zurück zur Übersicht Button */}
           <button
-            onClick={onOpenWelcomePortal}
+            onClick={role === 'teacher' ? onOpenTeacherDashboard : onOpenWelcomePortal}
             className="flex items-center gap-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg text-xs font-bold transition-all shadow-2xs active:scale-95 shrink-0"
-            title="Startmenü öffnen / Projekt wechseln"
+            title={role === 'teacher' ? 'Zurück zum Lehrer-Dashboard / Alle Projekte' : 'Startmenü öffnen / Projekt wechseln'}
           >
-            <LogOut className="w-3.5 h-3.5 text-slate-500" />
-            <span className="hidden xl:inline">Projekt wechseln</span>
+            {role === 'teacher' ? (
+              <>
+                <ArrowLeft className="w-3.5 h-3.5 text-amber-600" />
+                <span className="hidden xl:inline">Zurück zur Übersicht</span>
+              </>
+            ) : (
+              <>
+                <LogOut className="w-3.5 h-3.5 text-slate-500" />
+                <span className="hidden xl:inline">Projekt wechseln</span>
+              </>
+            )}
           </button>
 
           <button
