@@ -20,10 +20,12 @@ let cachedWorkingModel: string | null = null;
 let cachedApiVersion: string = 'v1beta';
 
 const FALLBACK_FLASH_MODELS = [
-  'gemini-2.5-flash',
-  'gemini-2.0-flash',
-  'gemini-1.5-flash',
+  'gemini-3.5-flash',
+  'gemini-3.6-flash',
+  'gemini-3.5-flash-lite',
+  'gemini-3.1-flash-lite',
   'gemini-flash-latest',
+  'gemini-flash-lite-latest',
 ];
 
 function extractModelVersion(modelName: string): number {
@@ -59,7 +61,17 @@ export async function discoverBestModel(key: string): Promise<{ model: string; v
           );
         })
         .map((m: any) => m.name.replace(/^models\//, ''))
-        .sort((a: string, b: string) => extractModelVersion(b) - extractModelVersion(a));
+        .filter((name: string) => {
+          const v = extractModelVersion(name);
+          return v === 0 || v >= 3.0;
+        })
+        .sort((a: string, b: string) => {
+          if (a === 'gemini-3.5-flash') return -1;
+          if (b === 'gemini-3.5-flash') return 1;
+          if (a === 'gemini-3.6-flash') return -1;
+          if (b === 'gemini-3.6-flash') return 1;
+          return extractModelVersion(b) - extractModelVersion(a);
+        });
 
       if (availableFlashModels.length > 0) {
         const bestModel = availableFlashModels[0];
@@ -72,7 +84,7 @@ export async function discoverBestModel(key: string): Promise<{ model: string; v
     console.warn('[Gemini] Live-Modellabfrage fehlgeschlagen, nutze Fallbacks:', e);
   }
 
-  return { model: 'gemini-2.5-flash', version: 'v1beta' };
+  return { model: 'gemini-3.5-flash', version: 'v1beta' };
 }
 
 async function executeGeminiRequest(key: string, promptText: string): Promise<string> {
@@ -362,3 +374,64 @@ Antworte STRENG als valides JSON:
   const cleaned = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
   return JSON.parse(cleaned);
 }
+
+// 5. KI-Generalproben-Helfer für die Verteidigung
+export async function generatePresentationAdvice(
+  board: ProjectBoard,
+  task: Task | null
+): Promise<{ examQuestions: string[]; tipsForDefense: string[]; rolePlayAdvice: string }> {
+  const apiKey = getGeminiApiKey();
+
+  const fallbackData = {
+    examQuestions: [
+      'Warum habt ihr genau diesen Praxisschwerpunkt gewählt?',
+      'Welche Quelle war für euer Fazit am verlässlichsten und warum?',
+      'Was würdet ihr rückblickend anders planen, wenn ihr noch einmal anfangen könntet?',
+    ],
+    tipsForDefense: [
+      'Jedes Gruppenmitglied sollte einen gleich langen Redeanteil haben.',
+      'Nicht von den Folien ablesen – nutzt kleine Karteikarten mit Stichworten.',
+      'Haltet Blickkontakt zu allen Prüfern und Lehrkräften im Raum.',
+    ],
+    rolePlayAdvice: 'Übt den Vortrag 1x komplett laut mit der Stoppuhr durch, ohne mittendrin abzubrechen!',
+  };
+
+  if (!apiKey) {
+    return fallbackData;
+  }
+
+  const prompt = `Du bist Fachprüfer und Betreuungslehrer an der Staatlichen Regelschule Heimbürgeschule Kahla in Thüringen.
+Eine Schülergruppe bereitet die Verteidigung / Präsentation ihrer Projektarbeit vor.
+
+PROJEKT: "${board.projectName}"
+FACH / BEREICH: "${board.subject || 'Allgemein'}"
+KLASSE: "${board.studentClass}" (Projekt-Typ: ${board.projectType === 'grad10' ? 'Prüfung Klasse 10' : 'Fachunterricht'})
+AUFGABE: "${task?.title || 'Präsentation'}" (${task?.desc || 'Präsentation üben'})
+
+Formuliere für die Generalprobe der Schüler:
+1. Drei realistische, typische Prüfungs- oder Fachfragen, die Lehrkräfte in der Fragerunde nach dem Vortrag stellen.
+2. Drei praktische Tipps für den Vortrag (Körpersprache, Übergänge im Team, Folien).
+3. Einen motivierenden Tipp für die Generalprobe.
+
+Antworte STRENG als valides JSON:
+{
+  "examQuestions": ["Frage 1", "Frage 2", "Frage 3"],
+  "tipsForDefense": ["Tipp 1", "Tipp 2", "Tipp 3"],
+  "rolePlayAdvice": "Ein Satz zum Ablauf der Generalprobe"
+}`;
+
+  try {
+    const raw = await executeGeminiRequest(apiKey, prompt);
+    const cleaned = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
+    const parsed = JSON.parse(cleaned);
+    return {
+      examQuestions: Array.isArray(parsed.examQuestions) && parsed.examQuestions.length > 0 ? parsed.examQuestions : fallbackData.examQuestions,
+      tipsForDefense: Array.isArray(parsed.tipsForDefense) && parsed.tipsForDefense.length > 0 ? parsed.tipsForDefense : fallbackData.tipsForDefense,
+      rolePlayAdvice: parsed.rolePlayAdvice || fallbackData.rolePlayAdvice,
+    };
+  } catch (err) {
+    console.warn('KI-Präsentationscoach Fallback:', err);
+    return fallbackData;
+  }
+}
+

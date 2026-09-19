@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Task, ProjectBoard } from '../types/project';
-import { getGeminiApiKey, discoverBestModel } from '../services/geminiService';
+import { generatePresentationAdvice } from '../services/geminiService';
 import {
   Sparkles,
   X,
   Loader2,
   HelpCircle,
   Lightbulb,
-  Mic,
   Award,
+  RotateCcw,
 } from 'lucide-react';
 
 interface PresentationCoachModalProps {
@@ -41,65 +41,9 @@ export const PresentationCoachModal: React.FC<PresentationCoachModalProps> = ({
 
   const loadPresentationAdvice = async () => {
     setIsLoading(true);
-    const apiKey = getGeminiApiKey();
-
-    if (!apiKey) {
-      setData({
-        examQuestions: [
-          'Warum habt ihr genau diesen Praxisschwerpunkt gewählt?',
-          'Welche Quelle war für euer Fazit am verlässlichsten und warum?',
-          'Was würdet ihr rückblickend anders planen, wenn ihr noch einmal anfangen könntet?',
-        ],
-        tipsForDefense: [
-          'Jedes Gruppenmitglied sollte einen gleich langen Redeanteil haben.',
-          'Nicht von den Folien ablesen – nutzt kleine Karteikarten mit Stichworten.',
-          'Haltet Blickkontakt zu allen Prüfern und Lehrkräften im Raum.',
-        ],
-        rolePlayAdvice: 'Übt den Vortrag 1x komplett laut mit der Stoppuhr durch, ohne mittendrin abzubrechen!',
-      });
-      setIsLoading(false);
-      return;
-    }
-
-    const prompt = `Du bist Fachprüfer und Betreuungslehrer an der Staatlichen Regelschule Heimbürgeschule Kahla in Thüringen.
-Eine Schülergruppe bereitet die Verteidigung / Präsentation ihrer Projektarbeit vor.
-
-PROJEKT: "${board.projectName}"
-FACH / BEREICH: "${board.subject || 'Allgemein'}"
-KLASSE: "${board.studentClass}" (Projekt-Typ: ${board.projectType === 'grad10' ? 'Prüfung Klasse 10' : 'Fachunterricht'})
-AUFGABE: "${task?.title}" (${task?.desc || 'Präsentation üben'})
-
-Formuliere für die Generalprobe der Schüler:
-1. Drei realistische, typische Prüfungs- oder Fachfragen, die Lehrkräfte in der Fragerunde nach dem Vortrag stellen.
-2. Drei praktische Tipps für den Vortrag (Körpersprache, Übergänge im Team, Folien).
-3. Einen motivierenden Tipp für die Generalprobe.
-
-Antworte STRENG als valides JSON:
-{
-  "examQuestions": ["Frage 1", "Frage 2", "Frage 3"],
-  "tipsForDefense": ["Tipp 1", "Tipp 2", "Tipp 3"],
-  "rolePlayAdvice": "Ein Satz zum Ablauf der Generalprobe"
-}`;
-
     try {
-      const { model } = await discoverBestModel(apiKey);
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ role: 'user', parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.3, responseMimeType: 'application/json' },
-        }),
-      });
-
-      if (res.ok) {
-        const json = await res.json();
-        const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (text) {
-          const cleaned = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
-          setData(JSON.parse(cleaned));
-        }
-      }
+      const advice = await generatePresentationAdvice(board, task);
+      setData(advice);
     } catch (e) {
       console.warn('KI-Präsentationscoach Fehler:', e);
     } finally {
@@ -183,10 +127,19 @@ Antworte STRENG als valides JSON:
             </div>
           ) : null}
 
-          <div className="flex justify-end pt-3 border-t">
+          <div className="flex justify-between items-center pt-3 border-t">
+            <button
+              onClick={loadPresentationAdvice}
+              disabled={isLoading}
+              className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl shadow-2xs border border-slate-300 flex items-center gap-1.5 transition-all disabled:opacity-50"
+              title="Neue Prüfungsfragen anfordern"
+            >
+              <RotateCcw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+              <span>Neue Fragen generieren</span>
+            </button>
             <button
               onClick={onClose}
-              className="px-5 py-2 bg-[#0B7BA7] hover:bg-[#00558F] text-white text-xs font-bold rounded-xl shadow-sm"
+              className="px-5 py-2 bg-[#0B7BA7] hover:bg-[#00558F] text-white text-xs font-bold rounded-xl shadow-sm cursor-pointer"
             >
               Verstanden & Schließen
             </button>
