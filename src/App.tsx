@@ -670,7 +670,7 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#f8fafc] text-gray-800 font-sans overflow-x-hidden">
+    <div className="min-h-screen flex flex-col bg-[#f8fafc] text-gray-800 font-sans overflow-x-clip">
       {/* Header */}
       <Header
         board={board}

@@ -82,7 +82,7 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="bg-white shadow-sm border-b-4 border-[#0B7BA7] sticky top-0 z-30">
+    <header className="bg-white shadow-md border-b-4 border-[#0B7BA7] sticky top-0 z-30 transition-shadow">
       <input
         type="file"
         ref={fileInputRef}
