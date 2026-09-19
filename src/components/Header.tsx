@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { getAllTeachers } from '../data/teachers';
 import { SCHOOL_CLASSES } from '../data/schoolClasses';
 import { ClassroomTimer } from './ClassroomTimer';
+import { SystemStatusBadge } from './SystemStatusBadge';
 import {
   Upload,
   Download,
@@ -11,8 +12,6 @@ import {
   Share2,
   GraduationCap,
   Settings,
-  Wifi,
-  WifiOff,
   Copy,
   Check,
   Users,
@@ -165,12 +164,12 @@ export const Header: React.FC<HeaderProps> = ({
             </p>
           </div>
 
-          {/* Board Code Badge (Desktop/Tablet) */}
+          {/* Board Code Badge (Desktop lg+) */}
           {board.boardCode && (
             <button
               onClick={handleCopyCode}
               title="Projekt-Code kopieren"
-              className="hidden sm:flex items-center gap-1.5 bg-sky-50 hover:bg-sky-100 text-[#0B7BA7] border border-sky-200 text-xs font-bold px-2.5 py-1 rounded-lg transition-colors shrink-0"
+              className="hidden lg:flex items-center gap-1.5 bg-sky-50 hover:bg-sky-100 text-[#0B7BA7] border border-sky-200 text-xs font-bold px-2.5 py-1 rounded-lg transition-colors shrink-0"
             >
               <span>Code: {board.boardCode}</span>
               {copiedCode ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5 opacity-60" />}
@@ -183,25 +182,15 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Classroom Timer */}
           <ClassroomTimer />
 
-          {/* Online / Offline Sync Indicator (Tablet/Desktop) */}
-          <div
-            title={isOnline ? (offlineQueueCount > 0 ? `${offlineQueueCount} Änderungen in Warteschlange` : 'Online & synchronisiert') : 'Offline'}
-            className={`hidden sm:flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-md border ${
-              isOnline
-                ? offlineQueueCount > 0
-                  ? 'bg-amber-50 text-amber-700 border-amber-200'
-                  : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                : 'bg-rose-50 text-rose-700 border-rose-200'
-            }`}
-          >
-            {isOnline ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
-            <span className="hidden lg:inline">
-              {isOnline ? (offlineQueueCount > 0 ? `Sync (${offlineQueueCount})` : 'Live') : 'Offline'}
-            </span>
-          </div>
+          {/* Global Cloud & KI Status Indicator */}
+          <SystemStatusBadge
+            isOnline={isOnline}
+            offlineQueueCount={offlineQueueCount}
+            variant="header"
+          />
 
-          {/* Action Buttons (Desktop / Tablet) */}
-          <div className="hidden sm:flex items-center gap-1.5">
+          {/* Action Buttons (Desktop xl / lg) */}
+          <div className="hidden lg:flex items-center gap-1.5">
             <button
               onClick={() => fileInputRef.current?.click()}
               className="flex items-center gap-1 bg-white hover:bg-gray-50 text-gray-700 px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-gray-300 shadow-sm transition-colors"
@@ -231,11 +220,11 @@ export const Header: React.FC<HeaderProps> = ({
 
             <button
               onClick={onOpenReport}
-              className="flex items-center gap-1 bg-[#0B7BA7] hover:bg-[#00558F] text-white px-2.5 py-1.5 rounded-lg text-xs font-bold shadow-sm transition-transform active:scale-95"
-              title="Statusbericht für EduPage"
+              className="flex items-center gap-1 bg-[#0B7BA7] hover:bg-[#096285] text-white px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-sm"
+              title="Projekt-Übersicht & Statistik"
             >
               <Share2 className="w-3.5 h-3.5" />
-              <span>Bericht</span>
+              <span className="hidden lg:inline">Bericht</span>
             </button>
           </div>
 
@@ -263,11 +252,11 @@ export const Header: React.FC<HeaderProps> = ({
           ) : (
             <button
               onClick={onOpenTeacherDashboard}
-              className="flex items-center gap-1 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg text-xs font-bold border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 transition-colors"
+              className="flex items-center gap-1 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg text-xs font-bold border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 transition-colors shrink-0"
               title="Lehrer-Login mit PIN"
             >
               <GraduationCap className="w-3.5 h-3.5 text-[#F39200]" />
-              <span className="hidden sm:inline">Lehrkraft</span>
+              <span className="hidden lg:inline">Lehrkraft</span>
             </button>
           )}
 
@@ -278,7 +267,7 @@ export const Header: React.FC<HeaderProps> = ({
             title="Handbuch & Onboarding öffnen"
           >
             <BookOpen className="w-3.5 h-3.5 text-[#0B7BA7]" />
-            <span className="hidden sm:inline">Guide</span>
+            <span className="hidden lg:inline">Guide</span>
           </button>
 
           {/* Projekt wechseln / Startmenü (für Schüler immer, für Lehrer nur Desktop/Tablet als Fallback) */}
@@ -407,8 +396,21 @@ export const Header: React.FC<HeaderProps> = ({
           ))}
         </select>
 
-        {/* Mobile Quick Action Buttons (shown only on small mobile screens) */}
-        <div className="flex sm:hidden items-center justify-between w-full pt-1.5 border-t border-slate-200/60 mt-0.5">
+        {/* Tablet Code Badge (< lg) */}
+        {board.boardCode && (
+          <button
+            type="button"
+            onClick={handleCopyCode}
+            title="Projekt-Code kopieren"
+            className="hidden sm:flex lg:hidden items-center gap-1.5 bg-sky-50 hover:bg-sky-100 text-[#0B7BA7] border border-sky-200 text-xs font-bold px-2.5 py-1 rounded-lg transition-colors shrink-0 shadow-2xs"
+          >
+            <span>Code: {board.boardCode}</span>
+            {copiedCode ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5 opacity-60" />}
+          </button>
+        )}
+
+        {/* Quick Action Buttons (shown on mobile & tablet) */}
+        <div className="flex lg:hidden items-center justify-between w-full pt-1.5 border-t border-slate-200/60 mt-0.5">
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => fileInputRef.current?.click()}

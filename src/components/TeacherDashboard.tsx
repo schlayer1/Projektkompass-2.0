@@ -11,6 +11,7 @@ import {
 } from '../services/boardService';
 import { generateTeacherProjectReport } from '../services/geminiService';
 import { TemplateEditorModal } from './TemplateEditorModal';
+import { SystemStatusBadge } from './SystemStatusBadge';
 import {
   GraduationCap,
   X,
@@ -40,6 +41,8 @@ interface TeacherDashboardProps {
   onOpenConsultationModal?: (board: ProjectBoard) => void;
   onOpenMilestoneEditor?: (board: ProjectBoard) => void;
   onOpenGuide?: () => void;
+  isOnline?: boolean;
+  offlineQueueCount?: number;
 }
 
 const FEEDBACK_SNIPPETS = [
@@ -57,6 +60,8 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
   onOpenConsultationModal,
   onOpenMilestoneEditor,
   onOpenGuide,
+  isOnline = navigator.onLine,
+  offlineQueueCount = 0,
 }) => {
   const { currentTeacher, logout } = useAuth();
   const [boards, setBoards] = useState<ProjectBoard[]>([]);
@@ -122,7 +127,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
   if (!isOpen) return null;
 
   const currentTeacherId = currentTeacher?.id || '';
-  const currentTeacherName = currentTeacher?.name.toLowerCase() || '';
+  const currentTeacherName = (currentTeacher?.name || currentTeacher?.displayName || '').toLowerCase();
 
   // Filter Boards according to active tab
   const filteredBoards = boards.filter((b) => {
@@ -201,7 +206,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
               <GraduationCap className="w-5 h-5 sm:w-6 h-6" />
             </div>
             <div className="min-w-0">
-              <div className="flex items-center gap-1.5 sm:gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                 <h2 className="text-base sm:text-lg font-black text-gray-900 leading-tight shrink-0">
                   Lehrer-Cockpit
                 </h2>
@@ -210,6 +215,11 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                     {currentTeacher.displayName}
                   </span>
                 )}
+                <SystemStatusBadge
+                  isOnline={isOnline}
+                  offlineQueueCount={offlineQueueCount}
+                  variant="dashboard"
+                />
               </div>
               <p className="text-[11px] text-gray-500 font-medium hidden sm:block truncate">
                 Regelschule Heimbürgeschule Kahla • Projektbegleitung & Notenvorbereitung

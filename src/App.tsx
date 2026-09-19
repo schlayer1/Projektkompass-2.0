@@ -816,6 +816,8 @@ export function App() {
           setModalTargetBoard(targetBoard);
           setIsMilestoneEditorOpen(true);
         }}
+        isOnline={isOnline}
+        offlineQueueCount={offlineCount}
       />
 
       <SettingsModal
