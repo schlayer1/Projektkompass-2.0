@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { Teacher, getTeacherByPin, MASTER_ADMIN_PIN } from '../data/teachers';
+import { Teacher, getAllTeachers, getTeacherByPin, MASTER_ADMIN_PIN, subscribeTeachers } from '../data/teachers';
 
 export type UserRole = 'student' | 'teacher' | null;
 
@@ -7,6 +7,7 @@ interface AuthContextType {
   role: UserRole;
   currentBoardCode: string;
   currentTeacher: Teacher | null;
+  teachers: Teacher[];
   isLoading: boolean;
   loginAsStudent: (boardCode: string) => Promise<void>;
   loginWithPin: (pin: string) => Promise<Teacher>;
@@ -23,6 +24,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [role, setRole] = useState<UserRole>(null);
   const [currentBoardCode, setCurrentBoardCode] = useState<string>('');
   const [currentTeacher, setCurrentTeacher] = useState<Teacher | null>(null);
+  const [teachers, setTeachers] = useState<Teacher[]>(() => getAllTeachers());
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -33,8 +35,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (savedRole === 'teacher' && savedTeacherRaw) {
         const parsed = JSON.parse(savedTeacherRaw);
+        const fresh = teachers.find(
+          (t) => t.id === parsed.id || t.name.trim().toLowerCase() === (parsed.name || '').trim().toLowerCase()
+        );
         setRole('teacher');
-        setCurrentTeacher(parsed);
+        setCurrentTeacher(fresh || parsed);
       } else if (savedRole === 'student' && savedCode) {
         setRole('student');
         setCurrentBoardCode(savedCode);
@@ -44,6 +49,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setIsLoading(false);
     }
+
+    const unsubscribe = subscribeTeachers((updatedList) => {
+      setTeachers(updatedList);
+      setCurrentTeacher((prev) => {
+        if (!prev || prev.id === 't-admin') return prev;
+        const fresh = updatedList.find(
+          (t) =>
+            t.id === prev.id ||
+            (prev.sourceTeacherId && t.sourceTeacherId === prev.sourceTeacherId) ||
+            t.name.trim().toLowerCase() === prev.name.trim().toLowerCase()
+        );
+        if (!fresh) return prev;
+        const nextTeacher: Teacher = {
+          ...fresh,
+          role: prev.role === 'admin' ? 'admin' : fresh.role,
+        };
+        if (
+          nextTeacher.name === prev.name &&
+          nextTeacher.displayName === prev.displayName &&
+          (nextTeacher.gender || '') === (prev.gender || '') &&
+          nextTeacher.pin === prev.pin &&
+          nextTeacher.role === prev.role
+        ) {
+          return prev;
+        }
+        try {
+          localStorage.setItem(AUTH_TEACHER_KEY, JSON.stringify(nextTeacher));
+        } catch {}
+        return nextTeacher;
+      });
+    });
+
+    return unsubscribe;
   }, []);
 
   const loginAsStudent = async (boardCode: string) => {
@@ -104,6 +142,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         role,
         currentBoardCode,
         currentTeacher,
+        teachers,
         isLoading,
         loginAsStudent,
         loginWithPin,

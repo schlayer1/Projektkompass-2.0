@@ -1,9 +1,40 @@
+import { initializeApp, getApps } from 'firebase/app';
+import { getFirestore, doc, onSnapshot, Firestore } from 'firebase/firestore';
+
+export type TeacherGender = 'f' | 'm' | 'd' | '';
+
 export interface Teacher {
   id: string;
   name: string;
   displayName: string;
+  gender?: TeacherGender;
+  sourceTeacherId?: string;
+  active?: boolean;
   pin: string;
   role: 'teacher' | 'admin';
+}
+
+export function formatTeacherName(
+  teacher?: { name?: string | null; gender?: TeacherGender | string | null; displayName?: string | null } | null
+): string {
+  const rawName = (teacher?.name || '').trim();
+  if (!rawName) return (teacher?.displayName || '').trim();
+  const lower = rawName.toLowerCase();
+  if (lower === 'nn') return 'Lehrkraft N.N.';
+  if (
+    lower.startsWith('frau ') ||
+    lower.startsWith('herr ') ||
+    lower.startsWith('fr. ') ||
+    lower.startsWith('hr. ') ||
+    lower === 'gast' ||
+    lower.includes('schulleitung') ||
+    lower.includes('administrator')
+  ) {
+    return rawName;
+  }
+  if (teacher?.gender === 'f') return `Frau ${rawName}`;
+  if (teacher?.gender === 'm') return `Herr ${rawName}`;
+  return rawName;
 }
 
 // Offizielle Kollegiumsliste der Staatlichen Regelschule Heimbürgeschule Kahla
@@ -53,21 +84,257 @@ export function isKoenitzer(teacher: Teacher | null): boolean {
   return teacher.id === "t-koentizert" || teacher.pin === KOENITZER_PIN || teacher.role === "admin";
 }
 
+const STATISTIK_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCnleowgQT4XoMK5P5b_t1uWYGsWoYxT80",
+  authDomain: "statistik-91f25.firebaseapp.com",
+  projectId: "statistik-91f25",
+  storageBucket: "statistik-91f25.firebasestorage.app",
+  messagingSenderId: "277742289737",
+  appId: "1:277742289737:web:b87043732524cc283d5098"
+};
+
+const APPPORTAL_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAr8Q3RslUSuaJbIIGiINGV24nm26jYoLQ",
+  authDomain: "terminkalender-7f269.firebaseapp.com",
+  projectId: "terminkalender-7f269",
+  storageBucket: "terminkalender-7f269.firebasestorage.app",
+  messagingSenderId: "919163141331",
+  appId: "1:919163141331:web:12c659f5c2946e7c7e2826"
+};
+
+const TEACHERS_CACHE_KEY = 'hbs_projektkompass_teachers_cache_v1';
+
+interface RawRemoteTeacher {
+  id?: string;
+  name?: string;
+  pin?: string;
+  gender?: string;
+  role?: string;
+  active?: boolean;
+  sourceTeacherId?: string;
+}
+
+const normalizeGender = (val: unknown): TeacherGender => {
+  if (val === 'f' || val === 'm' || val === 'd') return val;
+  return '';
+};
+
+function computeTeacherDisplayName(teacher: {
+  id?: string;
+  name: string;
+  gender?: TeacherGender;
+  role?: 'teacher' | 'admin';
+  fallbackDisplayName?: string;
+}): string {
+  const hasExplicitGender = teacher.gender === 'f' || teacher.gender === 'm' || teacher.gender === 'd';
+  if (hasExplicitGender) {
+    const base = formatTeacherName({ name: teacher.name, gender: teacher.gender });
+    return teacher.role === 'admin' && teacher.id === 't-koentizert' ? `${base} (Admin)` : base;
+  }
+  if (teacher.fallbackDisplayName) return teacher.fallbackDisplayName;
+  const base = formatTeacherName({ name: teacher.name, gender: '' });
+  return teacher.role === 'admin' ? `${base} (Admin)` : base;
+}
+
+function loadCachedTeachers(): Teacher[] {
+  if (typeof window === 'undefined') return HBS_TEACHERS;
+  try {
+    const raw = localStorage.getItem(TEACHERS_CACHE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch {}
+  return HBS_TEACHERS;
+}
+
+let liveTeachers: Teacher[] = loadCachedTeachers();
+let portalUsersCache: RawRemoteTeacher[] = [];
+let statistikTeachersCache: RawRemoteTeacher[] = [];
+let syncStarted = false;
+const teacherListeners = new Set<(teachers: Teacher[]) => void>();
+
+function notifyTeacherListeners() {
+  const sorted = getAllTeachers();
+  teacherListeners.forEach((cb) => {
+    try {
+      cb(sorted);
+    } catch {}
+  });
+}
+
+function rebuildLiveTeachers() {
+  const merged: Teacher[] = HBS_TEACHERS.map((t) => ({ ...t, active: true }));
+
+  const applyList = (list: RawRemoteTeacher[], isAuthoritativeStatistik: boolean) => {
+    list.forEach((st) => {
+      const rawName = (st?.name || '').trim();
+      if (!rawName || rawName.toLowerCase().includes('schulleitung')) return;
+
+      const stId = st.id ? String(st.id).trim() : '';
+      const cleanLower = rawName.toLowerCase();
+      const idx = merged.findIndex(
+        (u) =>
+          (stId && (u.sourceTeacherId === stId || u.id === `t-${stId}` || u.id === stId)) ||
+          u.name.trim().toLowerCase() === cleanLower
+      );
+
+      const rawPin = st.pin !== undefined && st.pin !== null ? String(st.pin).trim() : '';
+      const validPin = /^\d{4,}$/.test(rawPin) ? rawPin : '';
+      const hasGenderField = st.gender !== undefined && st.gender !== null;
+      const incomingGender = normalizeGender(st.gender);
+      const incomingActive = st.active !== false;
+
+      if (idx >= 0) {
+        const target = merged[idx];
+        if (validPin) target.pin = validPin;
+        if (hasGenderField && (isAuthoritativeStatistik || st.gender !== '')) {
+          target.gender = incomingGender;
+        }
+        target.name = rawName;
+        target.active = incomingActive;
+        if (stId && isAuthoritativeStatistik) target.sourceTeacherId = stId;
+        if (st.role === 'admin') target.role = 'admin';
+        target.displayName = computeTeacherDisplayName({
+          id: target.id,
+          name: target.name,
+          gender: target.gender,
+          role: target.role,
+          fallbackDisplayName: hasGenderField ? undefined : target.displayName,
+        });
+      } else if (validPin) {
+        const role: 'teacher' | 'admin' = st.role === 'admin' ? 'admin' : 'teacher';
+        const gender = hasGenderField ? incomingGender : '';
+        merged.push({
+          id: stId ? `t-${stId}` : `t-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          sourceTeacherId: isAuthoritativeStatistik && stId ? stId : undefined,
+          name: rawName,
+          gender,
+          displayName: computeTeacherDisplayName({
+            id: stId ? `t-${stId}` : undefined,
+            name: rawName,
+            gender,
+            role,
+          }),
+          pin: validPin,
+          role,
+          active: incomingActive,
+        });
+      }
+    });
+  };
+
+  if (portalUsersCache.length > 0) applyList(portalUsersCache, false);
+  if (statistikTeachersCache.length > 0) applyList(statistikTeachersCache, true);
+
+  liveTeachers = merged;
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(TEACHERS_CACHE_KEY, JSON.stringify(merged));
+    } catch {}
+  }
+  notifyTeacherListeners();
+}
+
+async function fetchStatistikViaRest() {
+  try {
+    const res = await fetch(
+      'https://firestore.googleapis.com/v1/projects/statistik-91f25/databases/(default)/documents/schools/HBS'
+    );
+    if (!res.ok) return;
+    const docJson = await res.json();
+    const values = docJson?.fields?.teachers?.arrayValue?.values;
+    if (!Array.isArray(values)) return;
+    statistikTeachersCache = values.map((v: any) => {
+      const f = v?.mapValue?.fields || {};
+      return {
+        id: f.id?.stringValue ?? '',
+        name: f.name?.stringValue ?? '',
+        pin: f.pin?.stringValue ?? '',
+        gender: f.gender?.stringValue ?? '',
+        active: f.active?.booleanValue !== undefined ? Boolean(f.active.booleanValue) : true,
+      };
+    });
+    rebuildLiveTeachers();
+  } catch (err) {
+    console.warn('Projektkompass Statistik REST Sync-Warnung:', err);
+  }
+}
+
+export function ensureTeacherSyncStarted() {
+  if (syncStarted || typeof window === 'undefined') return;
+  syncStarted = true;
+
+  try {
+    const existingPortal = getApps().find((a) => a.name === 'hbs-appportal-source');
+    const portalApp = existingPortal || initializeApp(APPPORTAL_FIREBASE_CONFIG, 'hbs-appportal-source');
+    const portalDb: Firestore = getFirestore(portalApp);
+    onSnapshot(
+      doc(portalDb, 'hbs_appportal', 'portal_data'),
+      (snap) => {
+        if (snap.exists()) {
+          const data = snap.data();
+          if (Array.isArray(data?.users) && data.users.length > 0) {
+            portalUsersCache = data.users;
+            rebuildLiveTeachers();
+          }
+        }
+      },
+      () => {}
+    );
+  } catch {}
+
+  try {
+    const existingStat = getApps().find((a) => a.name === 'hbs-statistik-source');
+    const statApp = existingStat || initializeApp(STATISTIK_FIREBASE_CONFIG, 'hbs-statistik-source');
+    const statDb: Firestore = getFirestore(statApp);
+    onSnapshot(
+      doc(statDb, 'schools', 'HBS'),
+      (snap) => {
+        if (snap.exists()) {
+          const data = snap.data();
+          if (Array.isArray(data?.teachers)) {
+            statistikTeachersCache = data.teachers;
+            rebuildLiveTeachers();
+          }
+        }
+      },
+      () => {
+        fetchStatistikViaRest();
+      }
+    );
+  } catch {
+    fetchStatistikViaRest();
+  }
+}
+
+ensureTeacherSyncStarted();
+
+export function subscribeTeachers(listener: (teachers: Teacher[]) => void): () => void {
+  ensureTeacherSyncStarted();
+  teacherListeners.add(listener);
+  return () => {
+    teacherListeners.delete(listener);
+  };
+}
+
 export function getAllTeachers(): Teacher[] {
-  return [...HBS_TEACHERS].sort((a, b) => a.name.localeCompare(b.name, 'de'));
+  return liveTeachers
+    .filter((t) => t.active !== false)
+    .sort((a, b) => a.name.localeCompare(b.name, 'de'));
 }
 
 export function getTeacherByPin(pin: string): Teacher | null {
   const clean = (pin || '').trim();
   if (!clean) return null;
-  return HBS_TEACHERS.find(t => t.pin === clean) || null;
+  return liveTeachers.find((t) => t.pin === clean && t.active !== false) || null;
 }
 
 export function getTeacherById(id: string): Teacher | null {
-  return HBS_TEACHERS.find(t => t.id === id) || null;
+  return liveTeachers.find((t) => t.id === id) || null;
 }
 
 export function getTeacherByName(name: string): Teacher | null {
   const clean = (name || '').trim().toLowerCase();
-  return HBS_TEACHERS.find(t => t.name.toLowerCase() === clean || t.displayName.toLowerCase().includes(clean)) || null;
+  return liveTeachers.find((t) => t.name.toLowerCase() === clean || t.displayName.toLowerCase().includes(clean)) || null;
 }

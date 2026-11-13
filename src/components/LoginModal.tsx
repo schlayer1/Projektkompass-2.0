@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { getAllTeachers, getTeacherByPin } from '../data/teachers';
+import { getTeacherByPin } from '../data/teachers';
 import { GraduationCap, Users, Key, X, ArrowRight, CheckCircle2 } from 'lucide-react';
 
 interface LoginModalProps {
@@ -16,7 +16,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   onLoadByCode,
   onTeacherSuccess,
 }) => {
-  const { loginWithPin } = useAuth();
+  const { loginWithPin, teachers } = useAuth();
   const [activeTab, setActiveTab] = useState<'teacher' | 'student'>('teacher');
   const [pin, setPin] = useState('');
   const [studentCode, setStudentCode] = useState('');
@@ -25,7 +25,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
   if (!isOpen) return null;
 
-  const detectedTeacher = pin.length === 4 ? getTeacherByPin(pin) : null;
+  const detectedTeacher = pin.length === 4 ? (teachers.find((t) => t.pin === pin.trim()) || getTeacherByPin(pin)) : null;
 
   const handleTeacherSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

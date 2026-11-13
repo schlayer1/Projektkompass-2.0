@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { getAllTeachers, getTeacherByPin } from '../data/teachers';
+import { getTeacherByPin } from '../data/teachers';
 import { SCHOOL_CLASSES } from '../data/schoolClasses';
 import { fetchTemplates } from '../services/boardService';
 import {
@@ -125,8 +125,8 @@ export const WelcomePortalModal: React.FC<WelcomePortalModalProps> = ({
 
   if (!isOpen) return null;
 
-  const teachers = getAllTeachers();
-  const detectedTeacher = teacherPin.length === 4 ? getTeacherByPin(teacherPin) : null;
+  const teachers = useAuth().teachers;
+  const detectedTeacher = teacherPin.length === 4 ? (teachers.find((t) => t.pin === teacherPin.trim()) || getTeacherByPin(teacherPin)) : null;
 
   // Handle Load Project via Code
   const handleCodeSubmit = async (e: React.FormEvent) => {

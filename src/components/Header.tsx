@@ -2,7 +2,6 @@ import React, { useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ProjectBoard, ProjectType } from '../types/project';
 import { useAuth } from '../context/AuthContext';
-import { getAllTeachers } from '../data/teachers';
 import { SCHOOL_CLASSES } from '../data/schoolClasses';
 import { ClassroomTimer } from './ClassroomTimer';
 import { SystemStatusBadge } from './SystemStatusBadge';
@@ -57,7 +56,7 @@ export const Header: React.FC<HeaderProps> = ({
   isOnline,
   offlineQueueCount,
 }) => {
-  const { role, currentTeacher, logout } = useAuth();
+  const { role, currentTeacher, teachers, logout } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [copiedCode, setCopiedCode] = React.useState(false);
   const [isStudentLogoutModalOpen, setIsStudentLogoutModalOpen] = React.useState(false);
@@ -78,8 +77,6 @@ export const Header: React.FC<HeaderProps> = ({
       return next;
     });
   };
-
-  const teachers = getAllTeachers();
 
   const handleCopyCode = () => {
     if (!board.boardCode) return;
