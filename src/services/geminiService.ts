@@ -20,21 +20,54 @@ let cachedWorkingModel: string | null = null;
 let cachedApiVersion: string = 'v1beta';
 
 const FALLBACK_FLASH_MODELS = [
-  'gemini-3.5-flash',
-  'gemini-3.6-flash',
-  'gemini-3.5-flash-lite',
-  'gemini-3.1-flash-lite',
-  'gemini-flash-latest',
+  'gemini-4-hydrogen',
   'gemini-flash-lite-latest',
+  'gemini-3.5-flash-lite',
+  'gemini-3.8-flash',
+  'gemini-3.6-flash',
+  'gemini-flash-latest',
+];
+
+const EXCLUDED_MODEL_PATTERNS = [
+  'argon',
+  'carbon',
+  'pro',
+  '2.5-',
+  '2.0-',
+  '1.5-',
+  '1.0-',
+  '3.7-flash',
+  '3-flash-preview',
+  '3.1-flash-lite',
+  'omni',
+  'live',
+  'nano-banana',
+  'robotics',
+  'deep-research',
+  'antigravity',
+  'embedding',
+  'aqa',
+  'tts',
+  'image',
+  'native-audio',
+  'transcribe',
+  'computer-use',
+  'veo',
+  'lyria',
+  '8b',
 ];
 
 function extractModelVersion(modelName: string): number {
-  const match = modelName.match(/gemini-(\d+(?:\.\d+)?)-flash/);
+  const priorityIndex = FALLBACK_FLASH_MODELS.indexOf(modelName);
+  if (priorityIndex !== -1) {
+    return 100 - priorityIndex;
+  }
+  const match = modelName.match(/gemini-(\d+(?:\.\d+)?)-/);
   return match ? parseFloat(match[1]) : 0;
 }
 
 export async function discoverBestModel(key: string): Promise<{ model: string; version: string }> {
-  if (cachedWorkingModel) {
+  if (cachedWorkingModel && cachedWorkingModel !== 'gemini-3.5-flash') {
     return { model: cachedWorkingModel, version: cachedApiVersion };
   }
 
@@ -46,32 +79,15 @@ export async function discoverBestModel(key: string): Promise<{ model: string; v
 
       const availableFlashModels = models
         .filter((m: any) => {
-          const name = m.name || '';
+          const shortName = (m.name || '').replace(/^models\//, '').toLowerCase();
           const methods = m.supportedGenerationMethods || [];
-          return (
-            methods.includes('generateContent') &&
-            name.includes('flash') &&
-            !name.includes('embedding') &&
-            !name.includes('aqa') &&
-            !name.includes('tts') &&
-            !name.includes('image') &&
-            !name.includes('native-audio') &&
-            !name.includes('transcribe') &&
-            !name.includes('computer-use')
-          );
+          if (!methods.includes('generateContent')) return false;
+          if (!shortName.includes('hydrogen') && !shortName.includes('flash')) return false;
+          if (shortName === 'gemini-3.5-flash') return false;
+          return !EXCLUDED_MODEL_PATTERNS.some((p) => shortName.includes(p));
         })
-        .map((m: any) => m.name.replace(/^models\//, ''))
-        .filter((name: string) => {
-          const v = extractModelVersion(name);
-          return v === 0 || v >= 3.0;
-        })
-        .sort((a: string, b: string) => {
-          if (a === 'gemini-3.5-flash') return -1;
-          if (b === 'gemini-3.5-flash') return 1;
-          if (a === 'gemini-3.6-flash') return -1;
-          if (b === 'gemini-3.6-flash') return 1;
-          return extractModelVersion(b) - extractModelVersion(a);
-        });
+        .map((m: any) => (m.name || '').replace(/^models\//, ''))
+        .sort((a: string, b: string) => extractModelVersion(b) - extractModelVersion(a));
 
       if (availableFlashModels.length > 0) {
         const bestModel = availableFlashModels[0];
@@ -84,7 +100,7 @@ export async function discoverBestModel(key: string): Promise<{ model: string; v
     console.warn('[Gemini] Live-Modellabfrage fehlgeschlagen, nutze Fallbacks:', e);
   }
 
-  return { model: 'gemini-3.5-flash', version: 'v1beta' };
+  return { model: 'gemini-4-hydrogen', version: 'v1beta' };
 }
 
 async function executeGeminiRequest(key: string, promptText: string): Promise<string> {
