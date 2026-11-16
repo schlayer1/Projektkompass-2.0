@@ -1,4 +1,4 @@
-import { initializeApp, getApps, getApp } from 'firebase/app';
+import { initializeApp, getApps } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
@@ -13,6 +13,7 @@ const firebaseConfig = {
   appId: env.VITE_FIREBASE_APP_ID || "1:77639235687:web:1bac4df8ec78b2073dfcc2"
 };
 
-export const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+const existingDefaultApp = getApps().find((a) => a.name === '[DEFAULT]');
+export const app = existingDefaultApp || initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
