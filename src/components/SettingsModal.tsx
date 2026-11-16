@@ -3,7 +3,6 @@ import {
   getGeminiApiKey,
   saveGeminiApiKey,
   discoverBestModel,
-  DEFAULT_HBS_GEMINI_KEY,
 } from '../services/geminiService';
 import { processOfflineQueue, getOfflineQueue } from '../services/offlineQueue';
 import { useAuth } from '../context/AuthContext';
@@ -80,16 +79,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   };
 
   const handleResetDefault = () => {
-    if (confirm('Zentralen Standardschlüssel der Heimbürgeschule wiederherstellen?')) {
-      setApiKey(DEFAULT_HBS_GEMINI_KEY);
-      saveGeminiApiKey(DEFAULT_HBS_GEMINI_KEY);
+    if (confirm('Auf sicheren Schul-Serverschlüssel zurücksetzen (eigenen Key entfernen)?')) {
+      setApiKey('');
+      saveGeminiApiKey('');
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 2000);
     }
   };
 
   const handleTestKey = async () => {
-    if (!apiKey.trim()) return;
     setIsTesting(true);
     setTestedModel(null);
     setTestError(null);
@@ -248,7 +246,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     type={showKey ? 'text' : 'password'}
                     value={apiKey}
                     onChange={(e) => setApiKey(e.target.value)}
-                    placeholder="API-Schlüssel eingeben..."
+                    placeholder="Leer lassen für Schul-Serverschlüssel (oder eigenen Key eingeben)..."
                     className="w-full p-2.5 bg-white border border-gray-300 rounded-xl focus:outline-none focus:border-[#0B7BA7] font-mono text-xs pr-10"
                   />
                 </div>
@@ -266,7 +264,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                   <button
                     type="button"
                     onClick={handleTestKey}
-                    disabled={isTesting || !apiKey}
+                    disabled={isTesting}
                     className="bg-white hover:bg-slate-50 text-gray-800 py-2 px-3.5 rounded-xl font-bold text-xs border border-gray-300 transition-colors disabled:opacity-50 flex items-center gap-1.5 shadow-sm"
                   >
                     {isTesting ? (

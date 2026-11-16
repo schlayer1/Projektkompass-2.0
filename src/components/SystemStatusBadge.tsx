@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Cloud, CloudOff, Sparkles, CheckCircle2, Info, X } from 'lucide-react';
-import { getGeminiApiKey } from '../services/geminiService';
 
 interface SystemStatusBadgeProps {
   isOnline: boolean;
@@ -14,8 +13,7 @@ export const SystemStatusBadge: React.FC<SystemStatusBadgeProps> = ({
   variant = 'header',
 }) => {
   const [showDetails, setShowDetails] = useState(false);
-  const hasAiKey = Boolean(getGeminiApiKey());
-  const isAiActive = hasAiKey && isOnline;
+  const isAiActive = isOnline;
 
   const cloudStatusText = isOnline
     ? offlineQueueCount > 0

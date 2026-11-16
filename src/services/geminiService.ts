@@ -1,23 +1,30 @@
 import { Task, TaskTag, ProjectBoard } from '../types/project';
 
-export const DEFAULT_HBS_GEMINI_KEY = ((import.meta as any).env?.VITE_GEMINI_API_KEY || '').trim();
-
+/**
+ * Gibt ausschließlich einen optional im Browser gespeicherten persönlichen BYOK-Key zurück.
+ * Der offizielle Schulschlüssel liegt sicher auf dem Server in Vercel (GEMINI_API_KEY).
+ */
 export function getGeminiApiKey(): string {
-  const fromLocal = localStorage.getItem('gemini_api_key') || '';
-  const fromEnv = (import.meta as any).env?.VITE_GEMINI_API_KEY || '';
-  return fromLocal.trim() || fromEnv.trim();
+  if (typeof window === 'undefined') return '';
+  try {
+    const fromLocal = localStorage.getItem('gemini_api_key') || '';
+    return fromLocal.trim();
+  } catch {
+    return '';
+  }
 }
 
 export function saveGeminiApiKey(key: string): void {
-  localStorage.setItem('gemini_api_key', key.trim());
-}
-
-export function isDefaultHbsKey(key: string): boolean {
-  return key.trim() === DEFAULT_HBS_GEMINI_KEY && DEFAULT_HBS_GEMINI_KEY.length > 0;
+  if (typeof window === 'undefined') return;
+  const trimmed = key.trim();
+  if (trimmed) {
+    localStorage.setItem('gemini_api_key', trimmed);
+  } else {
+    localStorage.removeItem('gemini_api_key');
+  }
 }
 
 let cachedWorkingModel: string | null = null;
-let cachedApiVersion: string = 'v1beta';
 
 const FALLBACK_FLASH_MODELS = [
   'gemini-4-hydrogen',
@@ -28,89 +35,79 @@ const FALLBACK_FLASH_MODELS = [
   'gemini-flash-latest',
 ];
 
-const EXCLUDED_MODEL_PATTERNS = [
-  'argon',
-  'carbon',
-  'pro',
-  '2.5-',
-  '2.0-',
-  '1.5-',
-  '1.0-',
-  '3.7-flash',
-  '3-flash-preview',
-  '3.1-flash-lite',
-  'omni',
-  'live',
-  'nano-banana',
-  'robotics',
-  'deep-research',
-  'antigravity',
-  'embedding',
-  'aqa',
-  'tts',
-  'image',
-  'native-audio',
-  'transcribe',
-  'computer-use',
-  'veo',
-  'lyria',
-  '8b',
-];
+export async function discoverBestModel(key?: string): Promise<{ model: string; version: string }> {
+  const customKey = (key || getGeminiApiKey()).trim();
+  const res = await fetch('/api/gemini', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      apiKey: customKey || 'serverless-proxy',
+      userPrompt: 'Antworte nur mit {"ok":true}',
+      temperature: 0.1,
+      maxOutputTokens: 64,
+      responseMimeType: 'application/json',
+    }),
+  });
 
-function extractModelVersion(modelName: string): number {
-  const priorityIndex = FALLBACK_FLASH_MODELS.indexOf(modelName);
-  if (priorityIndex !== -1) {
-    return 100 - priorityIndex;
-  }
-  const match = modelName.match(/gemini-(\d+(?:\.\d+)?)-/);
-  return match ? parseFloat(match[1]) : 0;
-}
-
-export async function discoverBestModel(key: string): Promise<{ model: string; version: string }> {
-  if (cachedWorkingModel && cachedWorkingModel !== 'gemini-3.5-flash') {
-    return { model: cachedWorkingModel, version: cachedApiVersion };
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData?.error || `HTTP ${res.status} vom Gemini-Proxy`);
   }
 
-  try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
-    if (res.ok) {
-      const data = await res.json();
-      const models = data.models || [];
-
-      const availableFlashModels = models
-        .filter((m: any) => {
-          const shortName = (m.name || '').replace(/^models\//, '').toLowerCase();
-          const methods = m.supportedGenerationMethods || [];
-          if (!methods.includes('generateContent')) return false;
-          if (!shortName.includes('hydrogen') && !shortName.includes('flash')) return false;
-          if (shortName === 'gemini-3.5-flash') return false;
-          return !EXCLUDED_MODEL_PATTERNS.some((p) => shortName.includes(p));
-        })
-        .map((m: any) => (m.name || '').replace(/^models\//, ''))
-        .sort((a: string, b: string) => extractModelVersion(b) - extractModelVersion(a));
-
-      if (availableFlashModels.length > 0) {
-        const bestModel = availableFlashModels[0];
-        cachedWorkingModel = bestModel;
-        cachedApiVersion = 'v1beta';
-        return { model: bestModel, version: 'v1beta' };
-      }
-    }
-  } catch (e) {
-    console.warn('[Gemini] Live-Modellabfrage fehlgeschlagen, nutze Fallbacks:', e);
-  }
-
-  return { model: 'gemini-4-hydrogen', version: 'v1beta' };
+  const data = await res.json();
+  const activeModel = data?.model || FALLBACK_FLASH_MODELS[0];
+  cachedWorkingModel = activeModel;
+  return { model: activeModel, version: 'v1beta' };
 }
 
 async function executeGeminiRequest(key: string, promptText: string): Promise<string> {
-  const { model: primaryModel } = await discoverBestModel(key);
-  const candidateModels = Array.from(new Set([primaryModel, ...FALLBACK_FLASH_MODELS]));
+  const customKey = (key || getGeminiApiKey()).trim();
+
+  // 1. Primärer Pfad: Sicherer Serverless-Proxy (/api/gemini)
+  try {
+    const proxyRes = await fetch('/api/gemini', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        apiKey: customKey || 'serverless-proxy',
+        userPrompt: promptText,
+        model: cachedWorkingModel || 'auto',
+        temperature: 0.3,
+        responseMimeType: 'application/json',
+      }),
+    });
+
+    if (proxyRes.ok) {
+      const data = await proxyRes.json();
+      if (data?.text) {
+        cachedWorkingModel = data.model || cachedWorkingModel;
+        return data.text;
+      }
+    }
+
+    if (proxyRes.status !== 404) {
+      const errData = await proxyRes.json().catch(() => ({}));
+      throw new Error(errData?.error || `HTTP ${proxyRes.status} vom Gemini-Proxy`);
+    }
+  } catch (proxyErr: any) {
+    if (proxyErr?.message && !proxyErr.message.includes('404')) {
+      throw proxyErr;
+    }
+  }
+
+  // 2. Fallback bei 404 nur mit persönlichem BYOK-Schlüssel
+  if (!customKey) {
+    throw new Error('Der Gemini-Server-Proxy (/api/gemini) ist nicht erreichbar.');
+  }
+
+  const candidateModels = cachedWorkingModel
+    ? Array.from(new Set([cachedWorkingModel, ...FALLBACK_FLASH_MODELS]))
+    : FALLBACK_FLASH_MODELS;
 
   let lastError: any = null;
 
   for (const model of candidateModels) {
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(customKey)}`;
     try {
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -211,9 +208,6 @@ export async function generateSubtasksWithGemini(
   projectContext?: string
 ): Promise<string[]> {
   const apiKey = getGeminiApiKey();
-  if (!apiKey) {
-    return STATIC_MAGIC_TEMPLATES[category] || STATIC_MAGIC_TEMPLATES.none;
-  }
 
   const prompt = `Du bist ein erfahrener, schülerfreundlicher Lehrer an der Regelschule Heimbürgeschule Kahla.
 Deine Aufgabe ist es, Schülern der Klassenstufe 7 bis 10 zu helfen, eine größere Projektaufgabe in 4 bis 5 machbare, konkrete Teilschritte (Checkliste) zu zerlegen.
@@ -258,17 +252,6 @@ export async function generateCoachAdvice(
   projectName?: string
 ): Promise<{ coachQuestion: string; tips: string[]; encouragement: string }> {
   const apiKey = getGeminiApiKey();
-  if (!apiKey) {
-    return {
-      coachQuestion: 'Wo genau kommt ihr gerade nicht weiter?',
-      tips: [
-        'Besprecht im Team, welcher Einzelschritt euch blockiert.',
-        'Fragt eine Nachbargruppe, wie sie das Problem gelöst hat.',
-        'Geht mit einer konkreten Frage zur Lehrkraft.',
-      ],
-      encouragement: 'Jedes Projekt hat mal einen Hänger – macht euch nichts draus, ihr schafft das!',
-    };
-  }
 
   const prompt = `Du bist ein einfühlsamer, motivierender Lerncoach an der Heimbürgeschule Kahla.
 Eine Schülergruppe signalisiert bei einer Projektaufgabe ein Problem ("Blockiert / Hilfe").
@@ -291,7 +274,7 @@ Antworte STRENG als valides JSON:
 }`;
 
   try {
-    const raw = await executeGeminiRequest(apiKey, prompt);
+    const raw = await executeGeminiRequest('', prompt);
     const cleaned = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
     const parsed = JSON.parse(cleaned);
     return {
@@ -316,14 +299,6 @@ export async function generateJournalImpulses(
   const completedToday = board.tasks.filter((t) => t.status === 'done');
   const inProgress = board.tasks.filter((t) => t.status === 'in_progress');
 
-  if (!apiKey) {
-    return {
-      goodImpulse: 'Welche Aufgabe hat euch heute am meisten vorangebracht?',
-      challengeImpulse: 'Gab es Missverständnisse oder technische Probleme?',
-      nextGoalImpulse: 'Welche eine Aufgabe wollt ihr beim nächsten Mal als erstes abschließen?',
-    };
-  }
-
   const prompt = `Du bist Lehrkraft an der Heimbürgeschule Kahla. Gib einer Schülergruppe für ihr Projekt-Tagebuch konkrete Reflexionsimpulse basierend auf ihrem heutigen Arbeitsstand.
 
 PROJEKT: "${board.projectName || 'Projekt'}" (Gruppe: ${board.studentName || 'Gruppe'})
@@ -338,7 +313,7 @@ Antworte STRENG als valides JSON:
 }`;
 
   try {
-    const raw = await executeGeminiRequest(apiKey, prompt);
+    const raw = await executeGeminiRequest('', prompt);
     const cleaned = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
     return JSON.parse(cleaned);
   } catch (e) {
@@ -355,9 +330,6 @@ export async function generateTeacherProjectReport(
   board: ProjectBoard
 ): Promise<{ summary: string; workProcessAssessment: string; strengths: string[]; advice: string }> {
   const apiKey = getGeminiApiKey();
-  if (!apiKey) {
-    throw new Error('Bitte hinterlege einen Gemini API-Schlüssel in den Einstellungen.');
-  }
 
   const doneCount = board.tasks.filter((t) => t.status === 'done').length;
   const inProgressCount = board.tasks.filter((t) => t.status === 'in_progress').length;
@@ -396,8 +368,6 @@ export async function generatePresentationAdvice(
   board: ProjectBoard,
   task: Task | null
 ): Promise<{ examQuestions: string[]; tipsForDefense: string[]; rolePlayAdvice: string }> {
-  const apiKey = getGeminiApiKey();
-
   const fallbackData = {
     examQuestions: [
       'Warum habt ihr genau diesen Praxisschwerpunkt gewählt?',
@@ -411,10 +381,6 @@ export async function generatePresentationAdvice(
     ],
     rolePlayAdvice: 'Übt den Vortrag 1x komplett laut mit der Stoppuhr durch, ohne mittendrin abzubrechen!',
   };
-
-  if (!apiKey) {
-    return fallbackData;
-  }
 
   const prompt = `Du bist Fachprüfer und Betreuungslehrer an der Staatlichen Regelschule Heimbürgeschule Kahla in Thüringen.
 Eine Schülergruppe bereitet die Verteidigung / Präsentation ihrer Projektarbeit vor.
@@ -437,7 +403,7 @@ Antworte STRENG als valides JSON:
 }`;
 
   try {
-    const raw = await executeGeminiRequest(apiKey, prompt);
+    const raw = await executeGeminiRequest('', prompt);
     const cleaned = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
     const parsed = JSON.parse(cleaned);
     return {
