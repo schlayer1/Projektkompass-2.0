@@ -1,5 +1,6 @@
 import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore, doc, onSnapshot, Firestore } from 'firebase/firestore';
+import { doc, onSnapshot, Firestore } from 'firebase/firestore';
+import { createPersistentFirestore } from '../lib/firebase';
 
 export type TeacherGender = 'f' | 'm' | 'd' | '';
 
@@ -268,7 +269,7 @@ export function ensureTeacherSyncStarted() {
   try {
     const existingPortal = getApps().find((a) => a.name === 'hbs-appportal-source');
     const portalApp = existingPortal || initializeApp(APPPORTAL_FIREBASE_CONFIG, 'hbs-appportal-source');
-    const portalDb: Firestore = getFirestore(portalApp);
+    const portalDb: Firestore = createPersistentFirestore(portalApp);
     onSnapshot(
       doc(portalDb, 'hbs_appportal', 'portal_data'),
       (snap) => {
@@ -287,7 +288,7 @@ export function ensureTeacherSyncStarted() {
   try {
     const existingStat = getApps().find((a) => a.name === 'hbs-statistik-source');
     const statApp = existingStat || initializeApp(STATISTIK_FIREBASE_CONFIG, 'hbs-statistik-source');
-    const statDb: Firestore = getFirestore(statApp);
+    const statDb: Firestore = createPersistentFirestore(statApp);
     onSnapshot(
       doc(statDb, 'schools', 'HBS'),
       (snap) => {
