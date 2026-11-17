@@ -6,6 +6,7 @@ import {
   getDocs,
   query,
   where,
+  limit,
   deleteDoc,
   serverTimestamp,
 } from 'firebase/firestore';
@@ -15,6 +16,44 @@ import { enqueueBoardOffline } from './offlineQueue';
 import { calculateSchoolYear } from '../utils/migration';
 
 const BOARDS_COLLECTION = 'projektkompass_boards';
+const BOARDS_CACHE_TTL_MS = 20_000;
+
+let cachedBoardsList: ProjectBoard[] | null = null;
+let cachedBoardsAt = 0;
+let inFlightBoardsLoad: Promise<ProjectBoard[]> | null = null;
+
+export function invalidateBoardsCache(): void {
+  cachedBoardsList = null;
+  cachedBoardsAt = 0;
+  inFlightBoardsLoad = null;
+}
+
+async function loadAllBoardsFromFirestoreCached(): Promise<ProjectBoard[]> {
+  const now = Date.now();
+  if (cachedBoardsList && now - cachedBoardsAt < BOARDS_CACHE_TTL_MS) {
+    return cachedBoardsList;
+  }
+  if (inFlightBoardsLoad) {
+    return inFlightBoardsLoad;
+  }
+
+  inFlightBoardsLoad = (async () => {
+    try {
+      const snap = await getDocs(collection(db, BOARDS_COLLECTION));
+      const boards = snap.docs.map((d) => ({
+        id: d.id,
+        ...(d.data() as Omit<ProjectBoard, 'id'>),
+      }));
+      cachedBoardsList = boards;
+      cachedBoardsAt = Date.now();
+      return boards;
+    } finally {
+      inFlightBoardsLoad = null;
+    }
+  })();
+
+  return inFlightBoardsLoad;
+}
 
 export const INITIAL_TEST_BOARDS: ProjectBoard[] = [
   {
@@ -227,9 +266,11 @@ export async function saveBoardToFirestore(
   try {
     const docRef = doc(db, BOARDS_COLLECTION, docId);
     await setDoc(docRef, boardData, { merge: true });
+    invalidateBoardsCache();
     return docId;
   } catch (err) {
     console.warn('Firestore Speichern fehlgeschlagen, speichere lokal in Offline-Queue:', err);
+    invalidateBoardsCache();
     if (useOfflineFallback) {
       enqueueBoardOffline({ ...board, id: docId });
     }
@@ -243,7 +284,7 @@ export async function fetchBoardByCode(code: string): Promise<ProjectBoard | nul
   if (!cleanCode) return null;
 
   try {
-    const q = query(collection(db, BOARDS_COLLECTION), where('boardCode', '==', cleanCode));
+    const q = query(collection(db, BOARDS_COLLECTION), where('boardCode', '==', cleanCode), limit(1));
     const snap = await getDocs(q);
     if (!snap.empty) {
       const docSnap = snap.docs[0];
@@ -264,11 +305,7 @@ export async function fetchBoardsForTeacher(
   filterClass?: string
 ): Promise<ProjectBoard[]> {
   try {
-    const snap = await getDocs(collection(db, BOARDS_COLLECTION));
-    const firestoreBoards = snap.docs.map((d) => ({
-      id: d.id,
-      ...(d.data() as Omit<ProjectBoard, 'id'>),
-    }));
+    const firestoreBoards = await loadAllBoardsFromFirestoreCached();
 
     const merged = [...firestoreBoards];
     // Falls Firestore noch leer oder unvollständig ist, Testboards ergänzen
@@ -299,11 +336,7 @@ export async function fetchBoardsForTeacher(
 // Lädt alle Vorlagen (Templates) aus Firestore
 export async function fetchTemplates(filterClass?: string): Promise<ProjectBoard[]> {
   try {
-    const snap = await getDocs(collection(db, BOARDS_COLLECTION));
-    const all = snap.docs.map((d) => ({
-      id: d.id,
-      ...(d.data() as Omit<ProjectBoard, 'id'>),
-    }));
+    const all = await loadAllBoardsFromFirestoreCached();
 
     const templates = all.filter((b) => b.isClassTemplate === true);
     if (!filterClass || filterClass === 'Alle') return templates;
@@ -337,6 +370,7 @@ export async function saveTeacherBoardFeedback(boardId: string, notes: string): 
   const docRef = doc(db, BOARDS_COLLECTION, boardId);
   try {
     await setDoc(docRef, { teacherNotes: notes, updatedAt: new Date().toISOString() }, { merge: true });
+    invalidateBoardsCache();
   } catch (e) {
     console.warn('Konnte Lehrer-Notiz nicht in Firestore speichern:', e);
   }
@@ -347,6 +381,7 @@ export async function deleteBoardDoc(boardId: string): Promise<void> {
   if (boardId.startsWith('test_')) return;
   try {
     await deleteDoc(doc(db, BOARDS_COLLECTION, boardId));
+    invalidateBoardsCache();
   } catch (e) {
     console.warn('Löschen fehlgeschlagen:', e);
   }
